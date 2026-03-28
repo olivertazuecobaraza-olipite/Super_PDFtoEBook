@@ -1,5 +1,8 @@
 name: Build Windows Installer
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [ "main", "master" ]
@@ -26,6 +29,7 @@ jobs:
 
     - name: Empaquetar el instalador .EXE con jpackage
       # Usamos jpackage pasando el JAR generado. Generará un instalador con JRE incrustado.
+      shell: cmd
       run: |
         jpackage ^
           --type exe ^
