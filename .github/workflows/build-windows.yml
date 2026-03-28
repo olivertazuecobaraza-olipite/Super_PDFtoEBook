@@ -1,0 +1,44 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Permite ejecutar el build manualmente desde la web de GitHub
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v4
+
+    - name: Configurar Java 17 (Temurin)
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Compilar Fat JAR con Maven
+      # Nos movemos a la carpeta del proyecto y compilamos
+      run: mvn clean package -f SuperPDFToEbook/pom.xml
+
+    - name: Empaquetar el instalador .EXE con jpackage
+      # Usamos jpackage pasando el JAR generado. Generará un instalador con JRE incrustado.
+      run: |
+        jpackage ^
+          --type exe ^
+          --name "SuperPDFToEbook" ^
+          --app-version "1.0.0" ^
+          --input SuperPDFToEbook/target/ ^
+          --main-jar ultimatesupercoolautogenerateextreme3000-1.0.0.jar ^
+          --win-shortcut ^
+          --win-menu ^
+          --win-dir-chooser
+
+    - name: Subir el .EXE a GitHub para descargarlo
+      uses: actions/upload-artifact@v4
+      with:
+        name: Instalador-Windows-SuperPDFToEbook
+        path: "*.exe"
