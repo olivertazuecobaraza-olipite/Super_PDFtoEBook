@@ -67,18 +67,21 @@ El visor ofrece un panel lateral (Sidebar) interactivo con tres niveles de prior
 
 ## 🚀 Cómo Empezar
 
-### Requisitos
-*   JDK 17+.
-*   Maven.
+### Instalación Directa (Recomendado)
+1.  Ve a la sección de **Releases** de este repositorio de GitHub.
+2.  Descarga la versión más reciente del instalador (`SuperPDF-Installer.exe` o el archivo `.zip` ejecutable).
+3.  Ejecuta el instalador y sigue las instrucciones en pantalla.
 
-### Instalación
-1.  Clona el repositorio.
-2.  Ejecuta `mvn clean install` para descargar dependencias.
-3.  Lanza `SuperPdfApplication` desde tu IDE favorito o con `mvn spring-boot:run`.
+### Para Desarrolladores (Build desde Código)
+Si prefieres compilarlo tú mismo:
+1.  Asegúrate de tener **JDK 17+** y **Maven** instalados.
+2.  Clona el repositorio: `git clone https://github.com/olivertazuecobaraza-olipite/Super_PDFtoEBook.git`
+3.  Ejecuta `mvn clean install`.
+4.  Lanza la aplicación con `mvn spring-boot:run`.
 
 ### Uso
 1.  Selecciona tu archivo PDF.
-2.  (Opcional) Pega el índice personalizado en el área de texto.
+2.  (Opcional) Pega el índice personalizado en el área de texto, o se creara un índice automático basado en los marcadores del PDF.
 3.  Dale a **Generar SCORM**.
 4.  ¡Listo! Encontrarás tu ZIP interactivo en el escritorio o ruta configurada.
 
