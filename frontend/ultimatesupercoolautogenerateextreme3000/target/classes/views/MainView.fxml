@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.oliver.presentation.controllers.MainController"
+            stylesheets="@../css/styles.css">
+
+    <!-- ==============================================
+         HEADER SUPERIOR
+         ============================================== -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-background-color: #f8f9ff; -fx-padding: 15px 30px;">
+            <!-- Título izquierdo -->
+            <Label text="Super PDF to eBook 3000 V1" style="-fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #000666;"/>
+            
+            <Region HBox.hgrow="ALWAYS" /> <!-- Espaciador flexible -->
+            
+            <!-- Botones de Sistema del lado derecho -->
+            <Button text="⚙ Settings" styleClass="btn-icon"/>
+            <Button text="? Help" styleClass="btn-icon"/>
+        </HBox>
+    </top>
+
+    <!-- ==============================================
+         SIDEBAR IZQUIERDA
+         ============================================== -->
+    <left>
+        <VBox styleClass="sidebar" prefWidth="240" spacing="10">
+            <!-- Opciones del menú -->
+            <Button fx:id="btnConverter" onAction="#goToConverter" text="➜ Converter" styleClass="menu-item, menu-item-active" maxWidth="Infinity" />
+            <Button fx:id="btnLibrary" onAction="#goToLibrary" text="📚 Library" styleClass="menu-item" maxWidth="Infinity" />
+            
+            <Region VBox.vgrow="ALWAYS" /> <!-- Espaciador vertical hasta abajo -->
+            
+        </VBox>
+    </left>
+
+    <!-- ==============================================
+         CONTENIDO PRINCIPAL (HUECO DINAMICO)
+         ============================================== -->
+    <center>
+        <!-- Acá es donde el Router maestro va a meter y sacar las pantallas hijas (ej. ConverterView) -->
+        <StackPane fx:id="contentArea" style="-fx-background-color: transparent;" />
+    </center>
+    
+</BorderPane>

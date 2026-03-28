@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBook SCORM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Barra lateral interactiva del Índice -->
+    <div id="sidebar" class="sidebar hidden">
+        <div class="sidebar-header">
+            <h2>Índice</h2>
+            <button id="btn-close-sidebar">X</button>
+        </div>
+        <div id="outline-content">
+            <!-- [[OUTLINE_HTML]] -->
+        </div>
+    </div>
+
+    <div id="viewer-container">
+        <script>
+            window.SCORM_TOTAL_PAGES = /*[[TOTAL_PAGES]]*/ 1; 
+        </script>
+        
+        <div id="book">
+            <div id="page-left-container" class="page-container hidden">
+                <img id="page-left" src="" alt="Página Izquierda">
+            </div>
+            <div id="page-right-container" class="page-container hidden">
+                <img id="page-right" src="" alt="Página Derecha">
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <button id="btn-outline">☰ Índice</button>
+            <button id="btn-prev" disabled>Anterior</button>
+            <span id="page-indicator">Página 1</span>
+            <button id="btn-next">Siguiente</button>
+            
+            <div class="zoom-controls">
+                <button id="btn-zoom-out">-</button>
+                <button id="btn-zoom-in">+</button>
+            </div>
+            <button id="btn-audio" title="Leer en voz alta">▶ Audio</button>
+        </div>
+    </div>
+    
+    <!-- Base de datos Offline generada por Java -->
+    <script src="assets/js/texts.js"></script>
+    <script src="js/viewer.js"></script>
+</body>
+</html>

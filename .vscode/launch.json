@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "SuperPdfApplication",
+            "request": "launch",
+            "mainClass": "com.oliver.presentation.application.SuperPdfApplication"
+        },
+        {
+            "type": "java",
+            "name": "SuperPdfApplication",
+            "request": "launch",
+            "mainClass": "com.oliver.presentation.application.SuperPdfApplication",
+            "projectName": "ultimatesupercoolautogenerateextreme3000"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-App<ultimatesupercoolautogenerateextreme3000>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.oliver/com.oliver.App",
+            "projectName": "ultimatesupercoolautogenerateextreme3000",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

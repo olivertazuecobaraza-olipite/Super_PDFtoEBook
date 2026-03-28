@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-padding: 20px 40px;"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.oliver.presentation.controllers.LibraryController"
+            stylesheets="@../css/styles.css">
+
+    <VBox spacing="40" style="-fx-padding: 20px 40px;">
+        
+        <!-- Encabezado de la página -->
+        <VBox spacing="10">
+            <Label text="MI BIBLIOTECA" style="-fx-font-size: 38px; -fx-font-weight: 800; -fx-text-fill: #000666;" />
+            <Label text="Aquí encontrarás todos tus eBooks generados listos para revisar, descargar o editar." style="-fx-text-fill: #515f74;" />
+        </VBox>
+
+        <!-- Grilla de ebooks (se inyectarán dinámicamente) -->
+        <VBox styleClass="glass-card" style="-fx-padding: 20px;" spacing="15">
+             <Label text="eBooks Completados" style="-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #000666;" />
+             
+             <!-- El Controller inyectará aquí los items o el Estado Vacío -->
+             <VBox fx:id="booksContainer" spacing="15">
+                 <!-- Acá se insertarán los elementos -->
+             </VBox>
+        </VBox>
+
+    </VBox>
+</ScrollPane>

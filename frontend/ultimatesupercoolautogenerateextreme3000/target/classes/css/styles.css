@@ -1,0 +1,109 @@
+/* =========================================
+   Traducción del Tailwind web a JavaFX CSS
+   ========================================= */
+
+/* Motor general */
+.root {
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+    -fx-background-color: #f8f9ff;
+}
+
+/* -----------------------------------------
+   Navegación Lateral (Sidebar)
+----------------------------------------- */
+.sidebar {
+    -fx-background-color: #eff4ff;
+    /* Sombras sutiles no aplican directo aquí por el layout, pero podríamos en un pane */
+}
+
+/* El header lateral de "The Alchemist" */
+.sidebar-profile-title {
+    -fx-text-fill: #000666;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.sidebar-profile-subtitle {
+    -fx-text-fill: #515f74;
+    -fx-font-size: 10px;
+}
+
+/* Botones del Menú Lateral */
+.menu-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #454652;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 12px 24px;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+}
+
+.menu-item:hover {
+    -fx-background-color: rgba(213, 227, 253, 0.5);
+    -fx-text-fill: #1A237E;
+}
+
+.menu-item-active {
+    -fx-background-color: #d5e3fd;
+    -fx-text-fill: #1A237E;
+    -fx-background-radius: 0 40 40 0; /* Borde redondeado a la derecha */
+}
+
+/* -----------------------------------------
+   Botones Primarios y Gradientes
+----------------------------------------- */
+.btn-primary {
+    -fx-background-color: #1a237e;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 40px;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #000666;
+}
+
+.alchemist-gradient {
+    -fx-background-color: linear-gradient(to bottom right, #000666, #1a237e);
+    -fx-text-fill: white;
+    -fx-background-radius: 12px;
+}
+
+/* -----------------------------------------
+   Tarjetas / Glassmorphism
+----------------------------------------- */
+.glass-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 20px;
+    /* Ambient shadow: */
+    -fx-effect: dropshadow(three-pass-box, rgba(13, 28, 47, 0.1), 30, 0, 0, 10);
+    -fx-border-color: rgba(198, 197, 212, 0.15);
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+}
+
+/* Botón fantasma */
+.btn-icon {
+    -fx-background-color: transparent;
+    -fx-text-fill: #515f74;
+    -fx-cursor: hand;
+}
+.btn-icon:hover {
+    -fx-text-fill: #1A237E;
+}
+
+/* -----------------------------------------
+   Elementos del Historial (Respuestas)
+----------------------------------------- */
+.history-item {
+    -fx-background-color: #f8f9ff;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+}
+
+.history-item:hover {
+    -fx-background-color: #eff4ff;
+    -fx-border-color: #c6c5d4;
+    -fx-border-radius: 10px;
+}
