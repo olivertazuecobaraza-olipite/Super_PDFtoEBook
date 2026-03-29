@@ -19,7 +19,8 @@ import java.nio.file.Files;
 import java.util.UUID;
 
 /**
- * Adaptador de Salida (Infrastructure).
+ * Adaptador de Salida (Infrastructure) para la extracción de PDFs.
+ * Implementa la lógica de renderizado y extracción de texto por página.
  */
 @Component
 public class ApachePdfExtractorAdapter implements PdfExtractorPort {
@@ -40,75 +41,58 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
                 PDFRenderer renderer = new PDFRenderer(document);
                 PDFTextStripper stripper = new PDFTextStripper();
             
-            int totalPages = document.getNumberOfPages();
-            
-            // Resolución de Árbol de Jerarquía de Índice (Prioridades)
-            String outlineHtml;
-            if (userTextIndex != null && !userTextIndex.trim().isEmpty()) {
-                System.out.println("📝 Utilizando índice provisto manualmente desde la Interfaz de Usuario...");
-                outlineHtml = parseUserTextIndexToHtml(userTextIndex);
-            } else {
-                PDDocumentOutline outline = document.getDocumentCatalog().getDocumentOutline();
-                if (outline != null && outline.getFirstChild() != null) {
-                    System.out.println("📑 Índice (Outline) nativo capturado con éxito.");
-                    outlineHtml = extractOutlineHTML(outline, document);
+                int totalPages = document.getNumberOfPages();
+                
+                // Resolución de Árbol de Jerarquía de Índice (Prioridades)
+                String outlineHtml;
+                if (userTextIndex != null && !userTextIndex.trim().isEmpty()) {
+                    System.out.println("📝 Utilizando índice provisto manualmente desde la Interfaz de Usuario...");
+                    outlineHtml = parseUserTextIndexToHtml(userTextIndex);
                 } else {
-                    System.out.println("⚠️ El PDF no tiene marcadores. Generando índice de paginación de respaldo.");
-                    outlineHtml = buildFallbackOutline(totalPages);
-                }
-            }
-
-            System.out.println("⏳ Procesando " + totalPages + " páginas...");
-            for (int i = 0; i < totalPages; i++) {
-                // Notificar progreso (0.0 a 1.0)
-                if (progressCallback != null) {
-                    progressCallback.accept((double) i / totalPages);
+                    PDDocumentOutline outline = document.getDocumentCatalog().getDocumentOutline();
+                    if (outline != null && outline.getFirstChild() != null) {
+                        System.out.println("📑 Índice (Outline) nativo capturado con éxito.");
+                        outlineHtml = extractOutlineHTML(outline, document);
+                    } else {
+                        System.out.println("⚠️ El PDF no tiene marcadores. Generando índice de paginación de respaldo.");
+                        outlineHtml = buildFallbackOutline(totalPages);
+                    }
                 }
 
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new InterruptedException("El usuario o el sistema cerró la aplicación durante el procesado.");
+                System.out.println("⏳ Procesando " + totalPages + " páginas...");
+                for (int i = 0; i < totalPages; i++) {
+                    // Notificar progreso (0.0 a 1.0)
+                    if (progressCallback != null) {
+                        progressCallback.accept((double) (i + 1) / totalPages);
+                    }
+
+                    if (Thread.currentThread().isInterrupted()) {
+                        throw new InterruptedException("El usuario o el sistema cerró la aplicación durante el procesado.");
+                    }
+                    int pageNum = i + 1;
+
+                    BufferedImage image = renderer.renderImageWithDPI(i, 200, ImageType.RGB);
+                    File imageFile = new File(tempDir, pageNum + ".jpg");
+                    ImageIO.write(image, "JPEG", imageFile);
+                    image.flush();
+
+                    stripper.setStartPage(pageNum);
+                    stripper.setEndPage(pageNum);
+                    String pageText = stripper.getText(document);
+                    File textFile = new File(tempDir, pageNum + ".txt");
+                    Files.writeString(textFile.toPath(), pageText);
                 }
-                int pageNum = i + 1;
 
-                BufferedImage image = renderer.renderImageWithDPI(i, 200, ImageType.RGB);
-                File imageFile = new File(tempDir, pageNum + ".jpg");
-                ImageIO.write(image, "JPEG", imageFile);
-                image.flush();
-
-                stripper.setStartPage(pageNum);
-                stripper.setEndPage(pageNum);
-                String pageText = stripper.getText(document);
-                File textFile = new File(tempDir, pageNum + ".txt");
-                Files.writeString(textFile.toPath(), pageText);
-            }
-
-            System.out.println("✅ [PDFBox] Todas las páginas volcadas. Imgs y Textos físicos disponibles.");
-            if (progressCallback != null) {
-                progressCallback.accept(1.0);
-            }
-            return new EbookPagesMap(tempDir, totalPages, outlineHtml);
-
+                System.out.println("✅ [PDFBox] Todas las páginas volcadas. Imgs y Textos físicos disponibles.");
+                return new EbookPagesMap(tempDir, totalPages, outlineHtml);
             }
         } catch (Exception e) {
             // CRITICO: Limpieza de basuras huérfanas si falla a la mitad del proceso
-            deleteDirectorySilently(tempDir);
+            deleteDirectory(tempDir);
             throw new Exception("Fallo en la extracción del PDF, archivos temporales revertidos: " + e.getMessage(), e);
         }
     }
     
-    private void deleteDirectorySilently(File dir) {
-        if (dir != null && dir.exists()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) deleteDirectorySilently(file);
-                    file.delete();
-                }
-            }
-            dir.delete();
-        }
-    }
-
     // Parser manual para el textarea del usuario (La Jerarquía #1)
     private String parseUserTextIndexToHtml(String userTextIndex) {
         StringBuilder sb = new StringBuilder();
@@ -207,8 +191,9 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
                 for (File file : files) {
                     if (file.isDirectory()) {
                         deleteDirectory(file);
+                    } else {
+                        file.delete();
                     }
-                    file.delete();
                 }
             }
             dir.delete();

@@ -35,20 +35,20 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
         try (FileOutputStream fos = new FileOutputStream(zipFile);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
             
-            addFileToZip(zos, "imsmanifest.xml", buildManifest(title).getBytes("UTF-8"));
+            addFileToZip(zos, "imsmanifest.xml", buildManifest(title).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
             String rawHtml = readTemplate("templates/scorm/index.html");
             // Doble inyección: el total de páginas y el HTML estático del menú Outline
             String mappedHtml = rawHtml.replace("/*[[TOTAL_PAGES]]*/ 1", String.valueOf(pagesMap.totalPages()))
                                        .replace("<!-- [[OUTLINE_HTML]] -->", pagesMap.outlineHtml());
                                        
-            addFileToZip(zos, "index.html", mappedHtml.getBytes("UTF-8"));
+            addFileToZip(zos, "index.html", mappedHtml.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
             String cssCode = readTemplate("templates/scorm/css/styles.css");
-            addFileToZip(zos, "css/styles.css", cssCode.getBytes("UTF-8"));
+            addFileToZip(zos, "css/styles.css", cssCode.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
             String jsCode = readTemplate("templates/scorm/js/viewer.js");
-            addFileToZip(zos, "js/viewer.js", jsCode.getBytes("UTF-8"));
+            addFileToZip(zos, "js/viewer.js", jsCode.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
             // Empaquetar activos Multimedia y armar JS dinámico Offline (Bypass a Web CORS)
             File tempDir = pagesMap.tempDirectory();
@@ -72,7 +72,7 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
                 }
             }
             jsTextArray.append("];\n");
-            addFileToZip(zos, "assets/js/texts.js", jsTextArray.toString().getBytes("UTF-8"));
+            addFileToZip(zos, "assets/js/texts.js", jsTextArray.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
             // Empaquetar SOLO los archivos JPG visuales al ZIP y notificar progreso
             File[] files = tempDir.listFiles();
@@ -83,6 +83,7 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
                 for (File file : files) {
                     if (file.getName().endsWith(".jpg")) {
                         byte[] fileData = Files.readAllBytes(file.toPath());
+                        // Usar siempre '/' para los nombres de entrada del ZIP (Estándar ZIP)
                         addFileToZip(zos, "assets/pages/" + file.getName(), fileData);
                         count++;
                         if (progressCallback != null && totalImages > 0) {
@@ -97,17 +98,17 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
         return zipFile.getAbsolutePath();
     }
     
-    // ... [Mismos métodos auxiliares idénticos de lectura de templates]...
     private String readTemplate(String path) throws IOException {
-        InputStream is = getClass().getClassLoader().getResourceAsStream(path);
-        if (is == null) throw new IOException("Plantilla no encontrada, asegurate que compiló " + path);
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
+            if (is == null) throw new IOException("Plantilla no encontrada, asegurate que compiló " + path);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+                return sb.toString();
             }
-            return sb.toString();
         }
     }
     

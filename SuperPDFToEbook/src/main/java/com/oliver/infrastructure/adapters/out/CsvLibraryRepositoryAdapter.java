@@ -85,24 +85,37 @@ public class CsvLibraryRepositoryAdapter implements LibraryRepositoryPort {
         File dbFile = new File(dbPath);
         if (!dbFile.exists()) return;
 
-        List<String> remainingLines = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(dbFile))) {
+        File tempFile = new File(dbPath + ".tmp");
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(dbFile));
+             PrintWriter pw = new PrintWriter(new FileWriter(tempFile))) {
+            
             String line;
+            boolean firstLine = true;
             while ((line = br.readLine()) != null) {
-                // Conservamos la línea si es la cabecera O si el ID no coincide
-                if (line.startsWith("ID,") || !line.startsWith(id + ",")) {
-                    remainingLines.add(line);
+                // Conservamos la cabecera siempre
+                if (firstLine && line.startsWith("ID,")) {
+                    pw.println(line);
+                    firstLine = false;
+                    continue;
                 }
+                
+                // Si el ID no coincide, conservamos la línea
+                if (!line.startsWith(id + ",")) {
+                    pw.println(line);
+                }
+                firstLine = false;
             }
         }
 
-        // Rescribimos el archivo con los que sobrevivieron
-        try (FileWriter fw = new FileWriter(dbFile, false);
-             PrintWriter pw = new PrintWriter(fw)) {
-            for (String line : remainingLines) {
-                pw.println(line);
-            }
+        // Reemplazo atómico del archivo original
+        if (!dbFile.delete()) {
+            throw new Exception("No se pudo eliminar el archivo original de la base de datos.");
         }
-        System.out.println("🗑️ [Database] Registro " + id + " eliminado correctamente.");
+        if (!tempFile.renameTo(dbFile)) {
+            throw new Exception("No se pudo renombrar el archivo temporal de la base de datos.");
+        }
+        
+        System.out.println("🗑️ [Database] Registro " + id + " eliminado correctamente (operación de disco atómica).");
     }
 }
