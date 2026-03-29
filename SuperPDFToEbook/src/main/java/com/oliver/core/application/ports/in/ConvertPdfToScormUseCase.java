@@ -9,7 +9,5 @@ import java.io.File;
  * Define el "QUÉ" queremos, sin importar el "CÓMO".
  */
 public interface ConvertPdfToScormUseCase {
-    
-    ConversionResult execute(File pdfFile, String textIndex);
-    
+    ConversionResult execute(File pdfFile, String textIndex, String customTitle, java.util.function.Consumer<Double> progressCallback);
 }

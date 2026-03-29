@@ -10,5 +10,5 @@ import com.oliver.core.domain.models.EbookPagesMap;
  * Delega esta responsabilidad a quien implemente esta interfaz (ej: Apache PDFBox).
  */
 public interface PdfExtractorPort {
-    EbookPagesMap extractPages(File pdfFile, String userTextIndex) throws Exception;
+    EbookPagesMap extractPages(File pdfFile, String userTextIndex, java.util.function.Consumer<Double> progressCallback) throws Exception;
 }

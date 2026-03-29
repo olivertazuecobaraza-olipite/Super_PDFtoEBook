@@ -16,28 +16,38 @@
             <Label text="SUBIR PDF" style="-fx-font-size: 38px; -fx-font-weight: 800; -fx-text-fill: #000666;" />
         </VBox>
 
-        <!-- Área de Subida y Texto (Grid Responsivo) -->
-        <FlowPane hgap="30" vgap="30">
+        <!-- Área de Subida y Texto (Distribución Equitativa) -->
+        <HBox spacing="30">
             <!-- Zona Drag and Drop -->
-            <StackPane fx:id="dropZone" styleClass="glass-card" style="-fx-padding: 60px;" minWidth="380" prefWidth="480">
+            <StackPane fx:id="dropZone" styleClass="glass-card" style="-fx-padding: 60px;" HBox.hgrow="ALWAYS" maxWidth="Infinity" prefWidth="500">
                 <VBox fx:id="dropBox" alignment="CENTER" spacing="20" style="-fx-border-color: rgba(118, 118, 131, 0.3); -fx-border-style: dashed; -fx-border-width: 2px; -fx-border-radius: 15px; -fx-padding: 40px;">
                     <Circle radius="35" styleClass="alchemist-gradient" />
                     <Label text="SUBIR PDF" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #0d1c2f;" />
-                    <Label fx:id="lblFileInfo" text="Arrastra y suelta tu archivo aquí o busca en tu PC" style="-fx-text-fill: #454652;" />
+                    <Label fx:id="lblFileInfo" text="Arrastra y suelta tu archivo aquí o busca en tu PC" style="-fx-text-fill: #454652; -fx-wrap-text: true; -fx-text-alignment: center;" />
+                    <ProgressIndicator fx:id="uploadProgress" visible="false" managed="false" />
                     <Button fx:id="btnSelectFile" onAction="#handleSelectFile" text="Seleccionar Archivo" styleClass="btn-primary" style="-fx-padding: 10px 25px;"/>
                 </VBox>
             </StackPane>
 
-            <!-- Zona Añadir Índice -->
-            <VBox spacing="15" minWidth="300" prefWidth="350">
-                <VBox styleClass="glass-card" style="-fx-padding: 20px;" spacing="10">
+            <!-- Zona Añadir Índice y Título -->
+            <VBox spacing="15" HBox.hgrow="ALWAYS" maxWidth="Infinity" prefWidth="500">
+                <VBox styleClass="glass-card" style="-fx-padding: 20px;" spacing="10" VBox.vgrow="ALWAYS">
                     <Label text="📋 Añadir Índice" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000666;"/>
-                    <TextArea fx:id="txtIndex" promptText="Escribe o pega aquí la estructura del índice para tu eBook..." prefRowCount="6" wrapText="true" style="-fx-background-color: #ffffff; -fx-border-color: transparent;" />
+                    <TextArea fx:id="txtIndex" promptText="Escribe o pega aquí la estructura del índice para tu eBook..." VBox.vgrow="ALWAYS" wrapText="true" style="-fx-background-color: #ffffff; -fx-border-color: transparent;" />
+                    
+                    <Region prefHeight="5"/>
+                    <Label text="📝 Título del eBook (Opcional)" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #000666;"/>
+                    <TextField fx:id="txtTitle" promptText="Ej: Curso de Matemáticas..." style="-fx-background-color: #ffffff; -fx-border-color: transparent; -fx-padding: 10px;" />
+                    
+                    <VBox fx:id="progressContainer" spacing="5" visible="false" managed="false" style="-fx-padding: 10px 0 0 0;">
+                        <Label fx:id="lblProgressText" text="Procesando tu SCORM..." style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #000666;" />
+                        <ProgressBar fx:id="convertProgressBar" progress="0.0" maxWidth="Infinity" prefHeight="12" style="-fx-accent: #000666; -fx-control-inner-background: #e2e8f0;" />
+                    </VBox>
                 </VBox>
                 
                 <Button fx:id="btnProcess" onAction="#handleProcessConvertion" text="✨ Empezar a crear la respuesta" styleClass="alchemist-gradient" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 15px;" maxWidth="Infinity"/>
             </VBox>
-        </FlowPane>
+        </HBox>
 
         <!-- Lista de Historial Generado (Respuestas) -->
         <VBox styleClass="glass-card" style="-fx-padding: 20px;" spacing="15">

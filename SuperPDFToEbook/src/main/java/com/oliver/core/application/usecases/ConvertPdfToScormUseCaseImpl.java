@@ -31,27 +31,41 @@ public class ConvertPdfToScormUseCaseImpl implements ConvertPdfToScormUseCase {
     }
 
     @Override
-    public ConversionResult execute(File pdfFile, String textIndex) {
+    public ConversionResult execute(File pdfFile, String textIndex, String customTitle, java.util.function.Consumer<Double> progressCallback) {
         if (pdfFile == null || !pdfFile.exists()) {
-            return new ConversionResult(false, "El archivo PDF proporcionado no existe o fue movido.", null);
+            return new ConversionResult(false, "El archivo PDF no existe o fue movido.", null);
         }
+        
+        System.out.println("🚀 [Dominio] Iniciando conversión para: " + pdfFile.getName());
 
         EbookPagesMap pagesMap = null;
         try {
-            System.out.println("🔄 Solicitando extracción y renderizado a disco desde PDFBox...");
-            // Extraer a imágenes JPG temporales en disco y mandar índice manual
-            pagesMap = pdfExtractor.extractPages(pdfFile, textIndex);
+            // Fase 1: Extracción del PDF (Representa el 50% del total)
+            pagesMap = pdfExtractor.extractPages(pdfFile, textIndex, progress -> {
+                if (progressCallback != null) {
+                    progressCallback.accept(progress * 0.5); 
+                }
+            });
+            System.out.println("✅ [Dominio] Extracción completada.");
             
-            System.out.println("📦 Construyendo empaquetado SCORM con Activos Estaticos e Imágenes...");
-            String packageTitle = pdfFile.getName().replace(".pdf", " - eBook");
-            String outputPath = scormGenerator.generatePackage(packageTitle, pagesMap);
+            // Determinar Título
+            String title = (customTitle == null || customTitle.trim().isEmpty()) 
+                    ? pdfFile.getName().replace(" ", "_").replace(".pdf", "")
+                    : customTitle.trim();
+
+            // Fase 2: Empaquetado a SCORM (Representa el otro 50%)
+            String outputPath = scormGenerator.generatePackage(title, pagesMap, progress -> {
+                if (progressCallback != null) {
+                    progressCallback.accept(0.5 + (progress * 0.5)); 
+                }
+            });
+            System.out.println("✅ [Dominio] SCORM generado en: " + outputPath);
             
-            // Grabación de metadatos en biblioteca local SQLite/CSV
-            String uuid = UUID.randomUUID().toString();
-            libraryRepository.save(uuid, packageTitle, outputPath, LocalDateTime.now());
+            // Fase 3: Registro en la base de datos (0%)
+            String id = UUID.randomUUID().toString();
+            libraryRepository.save(id, title, outputPath, LocalDateTime.now());
             
-            System.out.println("✅ ¡eBook Visor generado con éxito!");
-            return new ConversionResult(true, "¡eBook interactivo generado con éxito! Paquete SCORM preparado en:\n" + outputPath, outputPath);
+            return new ConversionResult(true, "¡Conversión SCORM 100% exitosa!", outputPath);
 
         } catch (Throwable e) {
             e.printStackTrace();

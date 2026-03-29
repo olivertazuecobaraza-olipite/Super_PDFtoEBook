@@ -25,7 +25,7 @@ import java.util.UUID;
 public class ApachePdfExtractorAdapter implements PdfExtractorPort {
 
     @Override
-    public EbookPagesMap extractPages(File pdfFile, String userTextIndex) throws Exception {
+    public EbookPagesMap extractPages(File pdfFile, String userTextIndex, java.util.function.Consumer<Double> progressCallback) throws Exception {
         System.out.println("📄 [PDFBox] Renderizando páginas y extrayendo Texto/TTS a disco: " + pdfFile.getName());
         
         String workspacePath = System.getProperty("user.home") + File.separator + ".superpdf_workspace";
@@ -60,6 +60,11 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
 
             System.out.println("⏳ Procesando " + totalPages + " páginas...");
             for (int i = 0; i < totalPages; i++) {
+                // Notificar progreso (0.0 a 1.0)
+                if (progressCallback != null) {
+                    progressCallback.accept((double) i / totalPages);
+                }
+
                 if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedException("El usuario o el sistema cerró la aplicación durante el procesado.");
                 }
@@ -78,6 +83,9 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
             }
 
             System.out.println("✅ [PDFBox] Todas las páginas volcadas. Imgs y Textos físicos disponibles.");
+            if (progressCallback != null) {
+                progressCallback.accept(1.0);
+            }
             return new EbookPagesMap(tempDir, totalPages, outlineHtml);
 
             }

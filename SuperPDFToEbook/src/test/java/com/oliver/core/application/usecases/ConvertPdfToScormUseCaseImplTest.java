@@ -50,7 +50,7 @@ class ConvertPdfToScormUseCaseImplTest {
     @DisplayName("Debe fallar rápidamente si el archivo PDF pasado es nulo o no existe")
     void testExecute_PdfNullOrNotExists() {
         // Ejecución (Act)
-        ConversionResult result = useCase.execute(null, "");
+        ConversionResult result = useCase.execute(null, "", null, null);
 
         // Verificamos el Modelo de Dominio devuelto (Assert)
         assertFalse(result.isSuccess(), "Si pasamos un PDF nulo, debe rebotarlo inmediatamente.");
@@ -69,11 +69,11 @@ class ConvertPdfToScormUseCaseImplTest {
         fakeTempDir.mkdirs();
         EbookPagesMap fakeMap = new EbookPagesMap(fakeTempDir, 5, "<ul><li>Index</li></ul>");
         
-        when(pdfExtractor.extractPages(mockPdfFile, "Índice customizado")).thenReturn(fakeMap);
-        when(scormGenerator.generatePackage(anyString(), eq(fakeMap))).thenReturn("/path/to/SCORM_Output.zip");
+        when(pdfExtractor.extractPages(eq(mockPdfFile), eq("Índice customizado"), any())).thenReturn(fakeMap);
+        when(scormGenerator.generatePackage(anyString(), eq(fakeMap), any())).thenReturn("/path/to/SCORM_Output.zip");
 
         // Ejecución (Act)
-        ConversionResult result = useCase.execute(mockPdfFile, "Índice customizado");
+        ConversionResult result = useCase.execute(mockPdfFile, "Índice customizado", "Titulo Test", null);
 
         // Afirmaciones (Assert)
         assertTrue(result.isSuccess(), "La conversión debe retornar True en el caso de éxito.");
@@ -88,11 +88,11 @@ class ConvertPdfToScormUseCaseImplTest {
     void testExecute_ExtractorThrowsException() throws Exception {
         // Configurar los mocks (Arrange)
         // Forzamos a que PDFBox simule explotar por falta de RAM o un PDF corrupto
-        when(pdfExtractor.extractPages(any(File.class), anyString()))
+        when(pdfExtractor.extractPages(any(File.class), anyString(), any()))
                 .thenThrow(new RuntimeException("Inyección emulada de Falla en Apache PDFBox"));
 
         // Ejecución (Act)
-        ConversionResult result = useCase.execute(mockPdfFile, null);
+        ConversionResult result = useCase.execute(mockPdfFile, null, null, null);
 
         // Afirmaciones (Assert)
         assertFalse(result.isSuccess(), "El caso de uso debe capturar el crash y devolver un ConversionResult con error controlado (Graceful Fail).");

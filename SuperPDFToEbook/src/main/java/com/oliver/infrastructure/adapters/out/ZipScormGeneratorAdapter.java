@@ -20,7 +20,7 @@ import java.util.zip.ZipOutputStream;
 public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
 
     @Override
-    public String generatePackage(String title, EbookPagesMap pagesMap) throws Exception {
+    public String generatePackage(String title, EbookPagesMap pagesMap, java.util.function.Consumer<Double> progressCallback) throws Exception {
         System.out.println("📦 [Zip SCORM] Empaquetando SCORM Interactivo (Index + Audio)...");
         
         String workspacePath = System.getProperty("user.home") + File.separator + ".superpdf_workspace";
@@ -74,13 +74,20 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
             jsTextArray.append("];\n");
             addFileToZip(zos, "assets/js/texts.js", jsTextArray.toString().getBytes("UTF-8"));
             
-            // Empaquetar SOLO los archivos JPG visuales al ZIP
+            // Empaquetar SOLO los archivos JPG visuales al ZIP y notificar progreso
             File[] files = tempDir.listFiles();
             if (files != null) {
+                int count = 0;
+                int totalImages = 0;
+                for (File f : files) { if (f.getName().endsWith(".jpg")) totalImages++; }
                 for (File file : files) {
                     if (file.getName().endsWith(".jpg")) {
                         byte[] fileData = Files.readAllBytes(file.toPath());
                         addFileToZip(zos, "assets/pages/" + file.getName(), fileData);
+                        count++;
+                        if (progressCallback != null && totalImages > 0) {
+                            progressCallback.accept((double) count / totalImages);
+                        }
                     }
                 }
             }

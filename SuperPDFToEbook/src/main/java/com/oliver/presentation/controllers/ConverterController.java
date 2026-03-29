@@ -14,6 +14,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -54,6 +57,16 @@ public class ConverterController {
     private Label lblFileInfo;
     @FXML
     private TextArea txtIndex;
+    @FXML
+    private TextField txtTitle;
+    @FXML
+    private ProgressBar convertProgressBar;
+    @FXML
+    private ProgressIndicator uploadProgress;
+    @FXML
+    private VBox progressContainer;
+    @FXML
+    private Label lblProgressText;
     @FXML
     private VBox recentBooksContainer;
 
@@ -131,10 +144,21 @@ public class ConverterController {
     }
 
     private void registerSelectedFile(File file) {
-        this.selectedPdfFile = file;
-        lastKnownDirectory = file.getParentFile();
-        lblFileInfo.setText("📄 " + file.getName() + " (" + (file.length() / 1024) + " KB)");
-        lblFileInfo.setStyle("-fx-text-fill: #1A237E; -fx-font-weight: bold;");
+        uploadProgress.setVisible(true);
+        uploadProgress.setManaged(true);
+        lblFileInfo.setText("Cargando archivo...");
+
+        // Simular un tiny delay de carga visual
+        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(600));
+        pause.setOnFinished(e -> {
+            uploadProgress.setVisible(false);
+            uploadProgress.setManaged(false);
+            this.selectedPdfFile = file;
+            lastKnownDirectory = file.getParentFile();
+            lblFileInfo.setText("📄 " + file.getName() + " (" + (file.length() / 1024) + " KB)");
+            lblFileInfo.setStyle("-fx-text-fill: #1A237E; -fx-font-weight: bold;");
+        });
+        pause.play();
     }
 
     @FXML
@@ -145,20 +169,28 @@ public class ConverterController {
             return;
         }
 
-        // Recuperar el índice (si existe)
+        // Recuperar el índice y título opcional
         String indexText = txtIndex.getText();
+        String customTitle = txtTitle.getText();
 
         // UI State: Entramos en modo "Procesando" para bloquear clicks accidentales
         btnProcess.setDisable(true);
         btnProcess.setText("⏳ Procesando, no cierres...");
         btnSelectFile.setDisable(true);
+        
+        progressContainer.setVisible(true);
+        progressContainer.setManaged(true);
+        lblProgressText.setText("Procesando tu SCORM...");
+        convertProgressBar.setProgress(0.0);
 
         // Hilo asíncrono estilo "Pro" (Task de JavaFX para no congelar la UI)
         Task<ConversionResult> conversionTask = new Task<ConversionResult>() {
             @Override
             protected ConversionResult call() throws Exception {
                 // Esta línea bloquea el hilo secundario (Background thread)
-                return convertUseCase.execute(selectedPdfFile, indexText);
+                return convertUseCase.execute(selectedPdfFile, indexText, customTitle, progress -> {
+                    Platform.runLater(() -> convertProgressBar.setProgress(progress));
+                });
             }
         };
 
@@ -170,6 +202,9 @@ public class ConverterController {
             Platform.runLater(() -> {
                 btnProcess.setDisable(false);
                 btnSelectFile.setDisable(false);
+                progressContainer.setVisible(false);
+                progressContainer.setManaged(false);
+                
                 if (result.isSuccess()) {
                     btnProcess.setText("✨ Crear otra respuesta");
                     lblFileInfo.setText("✅ ¡eBook guardado!");
@@ -196,6 +231,8 @@ public class ConverterController {
             Platform.runLater(() -> {
                 btnProcess.setDisable(false);
                 btnSelectFile.setDisable(false);
+                progressContainer.setVisible(false);
+                progressContainer.setManaged(false);
                 btnProcess.setText("☠️ ¡Fallo Crítico!");
                 lblFileInfo.setText("Excepción grave. Cierra y vuelve a abrir.");
                 lblFileInfo.setStyle("-fx-text-fill: #D32F2F; -fx-font-weight: bold;");
