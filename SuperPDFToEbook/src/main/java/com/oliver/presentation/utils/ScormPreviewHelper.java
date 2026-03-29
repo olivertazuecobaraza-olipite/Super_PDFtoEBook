@@ -36,10 +36,26 @@ public class ScormPreviewHelper {
 
                 File indexHtml = new File(extractDir, "index.html");
                 if (indexHtml.exists()) {
-                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                        Desktop.getDesktop().browse(indexHtml.toURI());
-                    } else {
-                        showError("Tu sistema operativo no soporta abrir navegadores desde Java de forma nativa.");
+                    String os = System.getProperty("os.name").toLowerCase();
+                    try {
+                        if (os.contains("win")) {
+                            // En instaladores JPackage, Desktop de Java falla miserablemente en Windows.
+                            // Solución: Invocación directa a la API de Windows saltando Java.
+                            Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", indexHtml.getAbsolutePath()});
+                        } else if (os.contains("mac")) {
+                            // Mac nativo
+                            Runtime.getRuntime().exec(new String[]{"open", indexHtml.getAbsolutePath()});
+                        } else if (os.contains("nix") || os.contains("nux")) {
+                            // Linux nativo
+                            Runtime.getRuntime().exec(new String[]{"xdg-open", indexHtml.getAbsolutePath()});
+                        } else if (Desktop.isDesktopSupported()) {
+                            // Fallback absoluto a Java
+                            Desktop.getDesktop().open(indexHtml);
+                        } else {
+                            showError("Tu sistema operativo no es reconocido para abrir navegadores auto-mágicamente.");
+                        }
+                    } catch (Exception ex) {
+                        showError("Fallo al pedirle al SO que abra el archivo: " + ex.getMessage());
                     }
                 } else {
                     showError("El paquete SCORM está corrupto: No tiene archivo index.html");
