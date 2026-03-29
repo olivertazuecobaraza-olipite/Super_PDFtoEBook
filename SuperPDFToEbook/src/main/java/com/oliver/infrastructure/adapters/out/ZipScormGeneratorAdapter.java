@@ -58,7 +58,7 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
             for (int i = 1; i <= pagesMap.totalPages(); i++) {
                 File txtFile = new File(tempDir, i + ".txt");
                 if (txtFile.exists()) {
-                    String content = Files.readString(txtFile.toPath());
+                    String content = Files.readString(txtFile.toPath(), java.nio.charset.StandardCharsets.UTF_8);
                     // Sanitización para inyección segura en Javascript
                     String escaped = content.replace("\\", "\\\\")
                                             .replace("\"", "\\\"")

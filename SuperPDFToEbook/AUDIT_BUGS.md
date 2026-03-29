@@ -102,6 +102,7 @@ Se han auditado los componentes principales desde la entrada de datos hasta la e
 15. **[Escalabilidad de Biblioteca (CSV Streaming)]**: Se refactorizó el método `delete` en `CsvLibraryRepositoryAdapter` para usar un archivo temporal en lugar de cargar la lista completa en RAM. Esto permite gestionar bibliotecas de miles de libros sin riesgo de `OutOfMemoryError`.
 16. **[Compatibilidad Universal de ZIP]**: Forzado del uso de barras diagonales `/` en las rutas internas del archivo ZIP generado, asegurando que el SCORM sea legible en cualquier sistema operativo (Windows, Linux, macOS) y cualquier LMS.
 17. **[Garantía de Codificación (StandardCharsets)]**: Migración masiva hacia `java.nio.charset.StandardCharsets.UTF_8` en todos los adaptadores de salida para evitar discrepancias de encoding entre sistemas operativos.
+18. **[Estabilidad de CI/CD (Test Suite Blindado)]**: Reparación de colisiones de tipos en Mockito (Strict Stubbing mismatch) y sincronización de encodings en los tests de integración del Generador SCORM. Ahora las Actions de GitHub pasan en verde esmeralda.
 
 ---
 > [!IMPORTANT]

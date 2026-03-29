@@ -88,7 +88,7 @@ class ConvertPdfToScormUseCaseImplTest {
     void testExecute_ExtractorThrowsException() throws Exception {
         // Configurar los mocks (Arrange)
         // Forzamos a que PDFBox simule explotar por falta de RAM o un PDF corrupto
-        when(pdfExtractor.extractPages(any(File.class), anyString(), any()))
+        when(pdfExtractor.extractPages(any(File.class), any(), any()))
                 .thenThrow(new RuntimeException("Inyección emulada de Falla en Apache PDFBox"));
 
         // Ejecución (Act)

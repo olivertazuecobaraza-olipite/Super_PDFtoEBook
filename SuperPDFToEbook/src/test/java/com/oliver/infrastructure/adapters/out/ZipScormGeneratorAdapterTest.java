@@ -65,7 +65,7 @@ class ZipScormGeneratorAdapterTest {
             
             // Verificar inyección de texto en texts.js
             ZipEntry textsEntry = zip.getEntry("assets/js/texts.js");
-            String textsJs = new String(zip.getInputStream(textsEntry).readAllBytes());
+            String textsJs = new String(zip.getInputStream(textsEntry).readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
             assertTrue(textsJs.contains("Contenido de la página 1"), "El JS de textos debe contener el texto de la página");
         } finally {
             // Cleanup
