@@ -34,9 +34,11 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
             throw new Exception("No se pudo crear el directorio temporal para renderizado.");
         }
 
-        try (PDDocument document = PDDocument.load(pdfFile)) {
-            PDFRenderer renderer = new PDFRenderer(document);
-            PDFTextStripper stripper = new PDFTextStripper();
+        try {
+            // Usamos MemoryUsageSetting.setupTempFileOnly() para que los PDFs gigantes (1000+ páginas) NO colapsen la Memoria RAM.
+            try (PDDocument document = PDDocument.load(pdfFile, org.apache.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())) {
+                PDFRenderer renderer = new PDFRenderer(document);
+                PDFTextStripper stripper = new PDFTextStripper();
             
             int totalPages = document.getNumberOfPages();
             
@@ -58,27 +60,44 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
 
             System.out.println("⏳ Procesando " + totalPages + " páginas...");
             for (int i = 0; i < totalPages; i++) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new InterruptedException("El usuario o el sistema cerró la aplicación durante el procesado.");
+                }
                 int pageNum = i + 1;
 
                 BufferedImage image = renderer.renderImageWithDPI(i, 200, ImageType.RGB);
                 File imageFile = new File(tempDir, pageNum + ".jpg");
                 ImageIO.write(image, "JPEG", imageFile);
                 image.flush();
-                
+
                 stripper.setStartPage(pageNum);
                 stripper.setEndPage(pageNum);
                 String pageText = stripper.getText(document);
                 File textFile = new File(tempDir, pageNum + ".txt");
                 Files.writeString(textFile.toPath(), pageText);
             }
-            
+
             System.out.println("✅ [PDFBox] Todas las páginas volcadas. Imgs y Textos físicos disponibles.");
             return new EbookPagesMap(tempDir, totalPages, outlineHtml);
-            
+
+            }
         } catch (Exception e) {
-            System.err.println("❌ [PDFBox] Error crítico, limpiando basura...: " + e.getMessage());
-            deleteDirectory(tempDir);
-            throw e;
+            // CRITICO: Limpieza de basuras huérfanas si falla a la mitad del proceso
+            deleteDirectorySilently(tempDir);
+            throw new Exception("Fallo en la extracción del PDF, archivos temporales revertidos: " + e.getMessage(), e);
+        }
+    }
+    
+    private void deleteDirectorySilently(File dir) {
+        if (dir != null && dir.exists()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) deleteDirectorySilently(file);
+                    file.delete();
+                }
+            }
+            dir.delete();
         }
     }
 
@@ -103,12 +122,12 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
                 try {
                     int pageNum = Integer.parseInt(pageStr);
                     sb.append("<li><a href=\"#\" onclick=\"window.goToPage(").append(pageNum).append("); return false;\">")
-                      .append(title).append("</a></li>");
+                      .append(escapeHtml(title)).append("</a></li>");
                 } catch (NumberFormatException e) {
-                    sb.append("<li><span style=\"opacity:0.8\">").append(line).append("</span></li>");
+                    sb.append("<li><span style=\"opacity:0.8\">").append(escapeHtml(line)).append("</span></li>");
                 }
             } else {
-                sb.append("<li><span style=\"opacity:0.8\">").append(line).append("</span></li>");
+                sb.append("<li><span style=\"opacity:0.8\">").append(escapeHtml(line)).append("</span></li>");
             }
         }
         sb.append("</ul>");
@@ -157,9 +176,9 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
             
             if (pageNum != -1) {
                 sb.append("<a href=\"#\" onclick=\"window.goToPage(").append(pageNum).append("); return false;\">")
-                  .append(title).append("</a>");
+                  .append(escapeHtml(title)).append("</a>");
             } else {
-                sb.append("<span>").append(title).append("</span>");
+                sb.append("<span>").append(escapeHtml(title)).append("</span>");
             }
             
             if (current.getFirstChild() != null) {
@@ -178,10 +197,22 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
             File[] files = dir.listFiles();
             if (files != null) {
                 for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    }
                     file.delete();
                 }
             }
             dir.delete();
         }
+    }
+
+    private String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;")
+                   .replace("'", "&#x27;");
     }
 }

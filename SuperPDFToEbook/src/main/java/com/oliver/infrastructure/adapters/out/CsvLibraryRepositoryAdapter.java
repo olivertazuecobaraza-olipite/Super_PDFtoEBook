@@ -23,13 +23,21 @@ import java.util.List;
 public class CsvLibraryRepositoryAdapter implements LibraryRepositoryPort {
 
     // Archivo maestro guardado discretamente en la carpeta de usuario
-    private static final String DB_PATH = System.getProperty("user.home") + File.separator + ".superpdf_library_db.csv";
+    private String dbPath = System.getProperty("user.home") + File.separator + ".superpdf_library_db.csv";
+
+    // Constructor default para la inyección mágica de Spring
+    public CsvLibraryRepositoryAdapter() {}
+    
+    // Constructor inyectable para Software Testing
+    public CsvLibraryRepositoryAdapter(String customPath) {
+        this.dbPath = customPath;
+    }
 
     @Override
-    public void save(String id, String title, String path, LocalDateTime date) throws Exception {
+    public synchronized void save(String id, String title, String path, LocalDateTime date) throws Exception {
         System.out.println("💾 [Database] Guardando nuevo eBook en la biblioteca: " + title);
         
-        File dbFile = new File(DB_PATH);
+        File dbFile = new File(dbPath);
         boolean fileExists = dbFile.exists();
         
         // Uso de try-with-resources asegura el cierre del recurso
@@ -41,20 +49,20 @@ public class CsvLibraryRepositoryAdapter implements LibraryRepositoryPort {
                 pw.println("ID,TITLE,FILE_PATH,CREATED_AT");
             }
             
-            // Escapamos comas para que no rompa el CSV simple
-            String safeTitle = title.replace(",", " -");
-            String safePath = path.replace(",", " ");
+            // Escapamos comas y SALTOS DE LÍNEA para que no rompa el CSV simple
+            String safeTitle = title != null ? title.replace(",", " -").replace("\r", " ").replace("\n", " ") : "Untitled";
+            String safePath = path != null ? path.replace(",", " ").replace("\r", "").replace("\n", "") : "";
             String dateFormatted = date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             
             pw.println(id + "," + safeTitle + "," + safePath + "," + dateFormatted);
         }
         
-        System.out.println("✅ [Database] eBook persistido correctamente en: " + DB_PATH);
+        System.out.println("✅ [Database] eBook persistido correctamente en: " + dbPath);
     }
 
     @Override
-    public List<Ebook> findAll() throws Exception {
-        File dbFile = new File(DB_PATH);
+    public synchronized List<Ebook> findAll() throws Exception {
+        File dbFile = new File(dbPath);
         if (!dbFile.exists()) {
             return Collections.emptyList();
         }
@@ -73,8 +81,8 @@ public class CsvLibraryRepositoryAdapter implements LibraryRepositoryPort {
     }
 
     @Override
-    public void delete(String id) throws Exception {
-        File dbFile = new File(DB_PATH);
+    public synchronized void delete(String id) throws Exception {
+        File dbFile = new File(dbPath);
         if (!dbFile.exists()) return;
 
         List<String> remainingLines = new ArrayList<>();

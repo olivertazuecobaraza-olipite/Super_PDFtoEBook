@@ -49,6 +49,13 @@
             <artifactId>pdfbox</artifactId>
             <version>2.0.30</version>
         </dependency>
+
+        <!-- Testing Framework (JUnit 5, Mockito, AssertJ, Spring Test) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <build>

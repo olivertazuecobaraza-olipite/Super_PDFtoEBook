@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Módulo Conector SCORM 1.2 (Moodle/LMS) ---
+    let scormAPI = null;
+    function findAPI(win) {
+        let findAPITries = 0;
+        while((win.API == null) && (win.parent != null) && (win.parent != win)) {
+            findAPITries++;
+            if (findAPITries > 7) { return null; }
+            win = win.parent;
+        }
+        return win.API;
+    }
+    
+    scormAPI = findAPI(window);
+    if ((scormAPI == null) && (window.opener != null) && (typeof(window.opener) != "undefined")) {
+        scormAPI = findAPI(window.opener);
+    }
+    
+    if (scormAPI) {
+        console.log("🟢 API SCORM Moodle/LMS Detectada con éxito.");
+        scormAPI.LMSInitialize("");
+        scormAPI.LMSSetValue("cmi.core.lesson_status", "incomplete");
+        scormAPI.LMSCommit("");
+    } else {
+        console.warn("🟡 Trabajando en modo Offline local. Sin API SCORM activa.");
+    }
+    
+    window.addEventListener("unload", () => {
+        if (scormAPI) {
+            scormAPI.LMSFinish("");
+        }
+    });
+    // --- Fin Conector SCORM ---
+
     const totalPages = window.SCORM_TOTAL_PAGES || 1;
     let currentPage = 1;
     let currentZoom = 1;
@@ -48,6 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         btnPrev.disabled = currentPage <= 1;
         btnNext.disabled = currentPage + 1 >= totalPages; 
+        
+        // Disparador de SCORM Completed
+        if (currentPage + 1 >= totalPages && scormAPI) {
+            scormAPI.LMSSetValue("cmi.core.lesson_status", "completed");
+            scormAPI.LMSCommit("");
+            console.log("✅ Reporte al LMS SCORM enviado: Completed.");
+        }
         
         // Cortar audio si se cambia de página violentamente
         if (isPlayingAudio) stopAudio();

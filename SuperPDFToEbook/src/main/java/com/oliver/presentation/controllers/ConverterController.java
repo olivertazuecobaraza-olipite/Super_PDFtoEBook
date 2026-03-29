@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.TransferMode;
@@ -72,7 +73,7 @@ public class ConverterController {
     private void setupDragAndDrop() {
         // Qué pasa cuando alguien arrastra algo POR ENCIMA de la zona (sin soltar)
         dropZone.setOnDragOver(event -> {
-            if (event.getDragboard().hasFiles()) {
+            if (!btnProcess.isDisabled() && event.getDragboard().hasFiles()) {
                 File file = event.getDragboard().getFiles().get(0);
                 if (file.getName().toLowerCase().endsWith(".pdf")) {
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
@@ -97,10 +98,10 @@ public class ConverterController {
             event.consume();
         });
 
-        // Qué pasa cuando alguien SUELTA el click
         dropZone.setOnDragDropped(event -> {
             boolean success = false;
-            if (event.getDragboard().hasFiles()) {
+            // Bloqueo de inyección si la app ya está procesando
+            if (!btnProcess.isDisabled() && event.getDragboard().hasFiles()) {
                 File file = event.getDragboard().getFiles().get(0);
                 if (file.getName().toLowerCase().endsWith(".pdf")) {
                     registerSelectedFile(file);
@@ -310,20 +311,50 @@ public class ConverterController {
 
         if (selectedFile != null) {
             lastKnownDirectory = selectedFile.getParentFile();
-            try {
-                File internalFile = new File(book.filePath());
-                if (internalFile.exists()) {
-                    Files.copy(internalFile.toPath(), selectedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("✅ SCORM descargado en: " + selectedFile.getAbsolutePath());
-                } else {
-                    Alert alert = new Alert(AlertType.ERROR);
-                    alert.setHeaderText("No encontrado");
-                    alert.setContentText("El archivo original no existe en el disco duro transitorio.");
-                    alert.show();
+            
+            Alert loadingAlert = new Alert(AlertType.INFORMATION);
+            loadingAlert.setTitle("Guardando");
+            loadingAlert.setHeaderText("Copiando paquete SCORM...");
+            loadingAlert.setContentText("Por favor espera, no cierres la aplicación.");
+            loadingAlert.getButtonTypes().clear(); // Quitar el botón OK para modo "Cargando"
+            loadingAlert.show();
+            
+            javafx.concurrent.Task<Void> copyTask = new javafx.concurrent.Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    File internalFile = new File(book.filePath());
+                    if (internalFile.exists()) {
+                        Files.copy(internalFile.toPath(), selectedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        throw new Exception("El archivo físico no se encuentra. Quizás fue borrado.");
+                    }
+                    return null;
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            };
+            
+            copyTask.setOnSucceeded(event -> {
+                loadingAlert.setResult(ButtonType.OK);
+                loadingAlert.close();
+                System.out.println("✅ SCORM descargado en: " + selectedFile.getAbsolutePath());
+                
+                Alert successAlert = new Alert(AlertType.INFORMATION);
+                successAlert.setTitle("Éxito");
+                successAlert.setHeaderText("¡Descarga Completada!");
+                successAlert.setContentText("SCORM guardado correctamente.");
+                successAlert.show();
+            });
+            
+            copyTask.setOnFailed(event -> {
+                loadingAlert.setResult(ButtonType.OK);
+                loadingAlert.close();
+                
+                Alert errorAlert = new Alert(AlertType.ERROR);
+                errorAlert.setHeaderText("Error de Descarga");
+                errorAlert.setContentText(copyTask.getException().getMessage());
+                errorAlert.show();
+            });
+            
+            new Thread(copyTask).start();
         }
     }
 }

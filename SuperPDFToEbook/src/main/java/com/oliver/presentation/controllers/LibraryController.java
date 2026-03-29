@@ -147,18 +147,46 @@ public class LibraryController {
 
         if (selectedFile != null) {
             lastKnownDirectory = selectedFile.getParentFile();
-            try {
-                // Copiamos el archivo interno oculto a la ruta visible seleccionada
-                File internalFile = new File(book.filePath());
-                if (internalFile.exists()) {
-                    Files.copy(internalFile.toPath(), selectedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("✅ SCORM descargado en: " + selectedFile.getAbsolutePath());
-                } else {
-                    mostrarError("El archivo físico no se encuentra. Quizás fue borrado.");
+            
+            Alert loadingAlert = new Alert(AlertType.INFORMATION);
+            loadingAlert.setTitle("Guardando");
+            loadingAlert.setHeaderText("Copiando paquete SCORM...");
+            loadingAlert.setContentText("Por favor espera, no cierres la aplicación.");
+            loadingAlert.getButtonTypes().clear(); // Quitar el botón OK para modo "Cargando"
+            loadingAlert.show();
+            
+            javafx.concurrent.Task<Void> copyTask = new javafx.concurrent.Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    File internalFile = new File(book.filePath());
+                    if (internalFile.exists()) {
+                        Files.copy(internalFile.toPath(), selectedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        throw new Exception("El archivo físico no se encuentra. Quizás fue borrado.");
+                    }
+                    return null;
                 }
-            } catch (Exception ex) {
-                mostrarError("Error guardando el archivo: " + ex.getMessage());
-            }
+            };
+            
+            copyTask.setOnSucceeded(e -> {
+                loadingAlert.setResult(ButtonType.OK);
+                loadingAlert.close();
+                System.out.println("✅ SCORM descargado en: " + selectedFile.getAbsolutePath());
+                
+                Alert successAlert = new Alert(AlertType.INFORMATION);
+                successAlert.setTitle("Éxito");
+                successAlert.setHeaderText("¡Descarga Completada!");
+                successAlert.setContentText("SCORM guardado correctamente.");
+                successAlert.show();
+            });
+            
+            copyTask.setOnFailed(e -> {
+                loadingAlert.setResult(ButtonType.OK);
+                loadingAlert.close();
+                mostrarError("Error guardando el archivo: " + copyTask.getException().getMessage());
+            });
+            
+            new Thread(copyTask).start();
         }
     }
 
@@ -171,12 +199,17 @@ public class LibraryController {
         deleteAlert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    // 1. Borrar de la DB (CSV)
-                    libraryRepository.delete(book.id());
-                    // 2. Borrar del disco local temporal
+                    System.out.println("🗑️ Intentando borrar físico y luego DB: " + book.title());
+                    // 1. Borrar del disco local (Físico primero)
                     File internalFile = new File(book.filePath());
-                    if (internalFile.exists())
-                        internalFile.delete();
+                    if (internalFile.exists()) {
+                        if (!internalFile.delete()) {
+                            throw new Exception("El sistema de archivos denegó el borrado físico. El archivo ZIP podría estar en uso por otro programa (Archivos huérfanos prevenidos).");
+                        }
+                    }
+
+                    // 2. Borrar de la DB (Si el físico falló, esta línea nunca se ejecuta)
+                    libraryRepository.delete(book.id());
 
                     // 3. Refrescar ListView Frontend
                     System.out.println("🗑️ Recargando DB visual...");

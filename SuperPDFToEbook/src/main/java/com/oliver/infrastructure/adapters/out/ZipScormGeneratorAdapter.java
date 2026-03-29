@@ -25,10 +25,12 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
         
         String workspacePath = System.getProperty("user.home") + File.separator + ".superpdf_workspace";
         File dir = new File(workspacePath);
-        if (!dir.exists()) dir.mkdirs();
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new Exception("No se pudo crear el directorio de trabajo: " + workspacePath + " (Posible falta de permisos)");
+        }
 
         String safeTitle = title.replaceAll("[^a-zA-Z0-9.-]", "_");
-        File zipFile = new File(dir, safeTitle + ".zip");
+        File zipFile = new File(dir, safeTitle + "_" + java.util.UUID.randomUUID().toString().substring(0, 8) + ".zip");
         
         try (FileOutputStream fos = new FileOutputStream(zipFile);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
@@ -61,7 +63,9 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
                     String escaped = content.replace("\\", "\\\\")
                                             .replace("\"", "\\\"")
                                             .replace("\n", "\\n")
-                                            .replace("\r", "");
+                                            .replace("\r", "")
+                                            .replace("<", "\\u003C")
+                                            .replace(">", "\\u003E");
                     jsTextArray.append(", \"").append(escaped).append("\"");
                 } else {
                     jsTextArray.append(", \"\"");
@@ -108,17 +112,25 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
     }
     
     private String buildManifest(String title) {
+        String safeXmlTitle = title != null ? title.replace("&", "&amp;")
+                                                   .replace("<", "&lt;")
+                                                   .replace(">", "&gt;")
+                                                   .replace("\"", "&quot;")
+                                                   .replace("'", "&apos;") : "eBook";
+
         return "<?xml version=\"1.0\" standalone=\"no\" ?>\n" +
-               "<manifest identifier=\"com.oliver.scorm\" version=\"1.2\" xmlns=\"http://www.imsproject.org/xsd/imscp_rootv1p1p2\">\n" +
+               "<manifest identifier=\"com.oliver.scorm\" version=\"1.2\" \n" +
+               "          xmlns=\"http://www.imsproject.org/xsd/imscp_rootv1p1p2\" \n" +
+               "          xmlns:adlcp=\"http://www.adlnet.org/xsd/adlcp_rootv1p2\">\n" +
                "  <metadata>\n" +
                "    <schema>ADL SCORM</schema>\n" +
                "    <schemaversion>1.2</schemaversion>\n" +
                "  </metadata>\n" +
                "  <organizations default=\"org_1\">\n" +
                "    <organization identifier=\"org_1\">\n" +
-               "      <title>" + title + "</title>\n" +
+               "      <title>" + safeXmlTitle + "</title>\n" +
                "      <item identifier=\"item_1\" identifierref=\"resource_1\">\n" +
-               "        <title>" + title + "</title>\n" +
+               "        <title>" + safeXmlTitle + "</title>\n" +
                "      </item>\n" +
                "    </organization>\n" +
                "  </organizations>\n" +

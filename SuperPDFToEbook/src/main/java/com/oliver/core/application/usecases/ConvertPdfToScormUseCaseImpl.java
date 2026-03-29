@@ -53,9 +53,10 @@ public class ConvertPdfToScormUseCaseImpl implements ConvertPdfToScormUseCase {
             System.out.println("✅ ¡eBook Visor generado con éxito!");
             return new ConversionResult(true, "¡eBook interactivo generado con éxito! Paquete SCORM preparado en:\n" + outputPath, outputPath);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
-            return new ConversionResult(false, "Fallo estrepitoso leyendo el PDF: " + e.getMessage(), null);
+            String errorMsg = (pagesMap == null) ? "Fallo estrepitoso leyendo el PDF" : "Fallo generando el Empaquetado SCORM o guardando en Biblioteca";
+            return new ConversionResult(false, errorMsg + ": " + e.getMessage(), null);
         } finally {
             // CRITICO: Bloque finally para barrer la casa. Java se va y no deja rastros (No Fugas de disco duro)
             if (pagesMap != null && pagesMap.tempDirectory() != null) {
@@ -70,6 +71,9 @@ public class ConvertPdfToScormUseCaseImpl implements ConvertPdfToScormUseCase {
             File[] files = dir.listFiles();
             if (files != null) {
                 for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    }
                     file.delete();
                 }
             }
