@@ -53,34 +53,61 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const btnCloseSidebar = document.getElementById('btn-close-sidebar');
     const btnAudio = document.getElementById('btn-audio');
+    
+    // Toggle Layout
+    const btnToggleView = document.getElementById('btn-toggle-view');
+    let isSinglePageMode = false;
 
-    // -- 1. Visor Dual --
+    // -- 1. Visor Dual / Single --
     function updateView() {
-        const showLeft = currentPage <= totalPages;
-        const showRight = currentPage + 1 <= totalPages;
-
-        if (showLeft) {
+        if (isSinglePageMode) {
             pageLeft.src = `assets/pages/${currentPage}.jpg`;
             pageLeftContainer.classList.remove('hidden');
-        } else {
-            pageLeftContainer.classList.add('hidden');
-        }
-
-        if (showRight) {
-            pageRight.src = `assets/pages/${currentPage + 1}.jpg`;
-            pageRightContainer.classList.remove('hidden');
-        } else {
             pageRightContainer.classList.add('hidden');
-        }
-
-        if (showRight) {
-            indicator.textContent = `Página ${currentPage} - ${currentPage + 1} de ${totalPages}`;
-        } else {
             indicator.textContent = `Página ${currentPage} de ${totalPages}`;
-        }
+            
+            btnPrev.disabled = currentPage <= 1;
+            btnNext.disabled = currentPage >= totalPages; 
+            
+            if (currentPage >= totalPages && scormAPI) {
+                scormAPI.LMSSetValue("cmi.core.lesson_status", "completed");
+                scormAPI.LMSCommit("");
+                console.log("✅ Reporte al LMS SCORM enviado: Completed.");
+            }
+        } else {
+            const showLeft = currentPage <= totalPages;
+            const showRight = currentPage + 1 <= totalPages;
 
-        btnPrev.disabled = currentPage <= 1;
-        btnNext.disabled = currentPage + 1 >= totalPages; 
+            if (showLeft) {
+                pageLeft.src = `assets/pages/${currentPage}.jpg`;
+                pageLeftContainer.classList.remove('hidden');
+            } else {
+                pageLeftContainer.classList.add('hidden');
+            }
+
+            if (showRight) {
+                pageRight.src = `assets/pages/${currentPage + 1}.jpg`;
+                pageRightContainer.classList.remove('hidden');
+            } else {
+                pageRightContainer.classList.add('hidden');
+            }
+
+            if (showRight) {
+                indicator.textContent = `Página ${currentPage} - ${currentPage + 1} de ${totalPages}`;
+            } else {
+                indicator.textContent = `Página ${currentPage} de ${totalPages}`;
+            }
+
+            btnPrev.disabled = currentPage <= 1;
+            btnNext.disabled = currentPage + 1 > totalPages; 
+            
+            // Disparador de SCORM Completed
+            if (currentPage + 1 >= totalPages && scormAPI) {
+                scormAPI.LMSSetValue("cmi.core.lesson_status", "completed");
+                scormAPI.LMSCommit("");
+                console.log("✅ Reporte al LMS SCORM enviado: Completed.");
+            }
+        }
         
         // Disparador de SCORM Completed
         if (currentPage + 1 >= totalPages && scormAPI) {
@@ -93,28 +120,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isPlayingAudio) stopAudio();
     }
 
-    // -- 2. Paginación y Zoom --
+    // -- 2. Paginación, Zoom y Layout --
     window.goToPage = function(pageNum) {
-        // Asegurarse de que arranca en impar para mantener vista de libro
-        currentPage = (pageNum % 2 === 0) ? pageNum - 1 : pageNum;
+        currentPage = pageNum;
+        if (!isSinglePageMode && currentPage % 2 === 0) {
+            currentPage--;
+        }
         if (currentPage < 1) currentPage = 1;
         updateView();
-        sidebar.classList.add('hidden'); // Ocultar sidebar al salta
+        sidebar.classList.add('hidden'); 
     };
 
     btnPrev.addEventListener('click', () => {
+        const step = isSinglePageMode ? 1 : 2;
         if (currentPage > 1) {
-            currentPage -= 2;
+            currentPage -= step;
             if (currentPage < 1) currentPage = 1;
             updateView();
         }
     });
 
     btnNext.addEventListener('click', () => {
-        if (currentPage + 1 < totalPages) {
-            currentPage += 2;
+        const step = isSinglePageMode ? 1 : 2;
+        if (currentPage + step <= totalPages || (!isSinglePageMode && currentPage + 1 <= totalPages)) {
+            currentPage += step;
             updateView();
         }
+    });
+    
+    btnToggleView.addEventListener('click', () => {
+        isSinglePageMode = !isSinglePageMode;
+        btnToggleView.innerHTML = isSinglePageMode ? "📖 2 Pág" : "📖 1 Pág";
+        btnToggleView.title = isSinglePageMode ? "Cambiar a 2 páginas" : "Cambiar a 1 página";
+        
+        // Si volvemos a doble-página, aseguramos que la página actual sea impar (vista de libro)
+        if (!isSinglePageMode && currentPage % 2 === 0) {
+            currentPage--;
+        }
+        updateView();
     });
 
     function applyZoom() {
@@ -165,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 textToRead += window.SCORM_PAGES_TEXT[currentPage];
             }
             
-            if (currentPage + 1 <= totalPages && window.SCORM_PAGES_TEXT && window.SCORM_PAGES_TEXT[currentPage + 1]) {
+            if (!isSinglePageMode && currentPage + 1 <= totalPages && window.SCORM_PAGES_TEXT && window.SCORM_PAGES_TEXT[currentPage + 1]) {
                 textToRead += " ... " + window.SCORM_PAGES_TEXT[currentPage + 1]; 
             }
 

@@ -23,6 +23,21 @@
             window.SCORM_TOTAL_PAGES = /*[[TOTAL_PAGES]]*/ 1; 
         </script>
         
+        <div class="toolbar">
+            <button id="btn-outline">☰ Índice</button>
+            <button id="btn-prev" disabled>Anterior</button>
+            <span id="page-indicator">Página 1</span>
+            <button id="btn-next">Siguiente</button>
+            
+            <button id="btn-toggle-view" title="Cambiar a 1 página">📖 1 Pág</button>
+            
+            <div class="zoom-controls">
+                <button id="btn-zoom-out">-</button>
+                <button id="btn-zoom-in">+</button>
+            </div>
+            <button id="btn-audio" title="Leer en voz alta">▶ Audio</button>
+        </div>
+
         <div id="book">
             <div id="page-left-container" class="page-container hidden">
                 <img id="page-left" src="" alt="Página Izquierda">
@@ -30,19 +45,6 @@
             <div id="page-right-container" class="page-container hidden">
                 <img id="page-right" src="" alt="Página Derecha">
             </div>
-        </div>
-        
-        <div class="toolbar">
-            <button id="btn-outline">☰ Índice</button>
-            <button id="btn-prev" disabled>Anterior</button>
-            <span id="page-indicator">Página 1</span>
-            <button id="btn-next">Siguiente</button>
-            
-            <div class="zoom-controls">
-                <button id="btn-zoom-out">-</button>
-                <button id="btn-zoom-in">+</button>
-            </div>
-            <button id="btn-audio" title="Leer en voz alta">▶ Audio</button>
         </div>
     </div>
     
