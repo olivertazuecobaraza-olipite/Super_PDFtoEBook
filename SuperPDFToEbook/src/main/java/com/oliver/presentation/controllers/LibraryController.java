@@ -21,6 +21,7 @@ import javafx.stage.FileChooser;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import com.oliver.presentation.utils.ScormPreviewHelper;
 
 @Component
 public class LibraryController {
@@ -94,8 +95,12 @@ public class LibraryController {
     private HBox createBookCard(Ebook book) {
         HBox card = new HBox(15);
         card.getStyleClass().add("history-item");
-        card.setStyle("-fx-padding: 15px;");
+        card.setStyle("-fx-padding: 15px; -fx-cursor: hand;");
         card.setAlignment(Pos.CENTER_LEFT);
+
+        card.setOnMouseClicked(e -> {
+            ScormPreviewHelper.previewScormZip(book.filePath());
+        });
 
         Region icon = new Region();
         icon.setStyle(

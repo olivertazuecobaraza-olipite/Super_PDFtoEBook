@@ -26,6 +26,7 @@ import javafx.scene.layout.VBox;
 import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
 import org.springframework.stereotype.Component;
+import com.oliver.presentation.utils.ScormPreviewHelper;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -177,6 +178,8 @@ public class ConverterController {
         btnProcess.setDisable(true);
         btnProcess.setText("⏳ Procesando, no cierres...");
         btnSelectFile.setDisable(true);
+        txtIndex.setDisable(true);
+        txtTitle.setDisable(true);
         
         progressContainer.setVisible(true);
         progressContainer.setManaged(true);
@@ -202,6 +205,8 @@ public class ConverterController {
             Platform.runLater(() -> {
                 btnProcess.setDisable(false);
                 btnSelectFile.setDisable(false);
+                txtIndex.setDisable(false);
+                txtTitle.setDisable(false);
                 progressContainer.setVisible(false);
                 progressContainer.setManaged(false);
                 
@@ -210,6 +215,8 @@ public class ConverterController {
                     lblFileInfo.setText("✅ ¡eBook guardado!");
                     lblFileInfo.setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold;");
                     this.selectedPdfFile = null; // Reiniciamos estado
+                    txtIndex.clear(); // Limpiando campos de texto como pidió el usuario
+                    txtTitle.clear();
                     loadRecentBooks(); // <--- Recargar la lista al vuelo!
                 } else {
                     btnProcess.setText("✨ Intentar de nuevo");
@@ -231,6 +238,8 @@ public class ConverterController {
             Platform.runLater(() -> {
                 btnProcess.setDisable(false);
                 btnSelectFile.setDisable(false);
+                txtIndex.setDisable(false); // Liberar
+                txtTitle.setDisable(false); // Liberar
                 progressContainer.setVisible(false);
                 progressContainer.setManaged(false);
                 btnProcess.setText("☠️ ¡Fallo Crítico!");
@@ -303,8 +312,13 @@ public class ConverterController {
     private HBox createBookCard(Ebook book) {
         HBox card = new HBox(15);
         card.getStyleClass().add("history-item");
-        card.setStyle("-fx-padding: 15px;");
+        card.setStyle("-fx-padding: 15px; -fx-cursor: hand;");
         card.setAlignment(Pos.CENTER_LEFT);
+        
+        // Al hacer click, abre en el navegador el SCORM
+        card.setOnMouseClicked(event -> {
+             ScormPreviewHelper.previewScormZip(book.filePath());
+        });
 
         Region icon = new Region();
         icon.setStyle(
