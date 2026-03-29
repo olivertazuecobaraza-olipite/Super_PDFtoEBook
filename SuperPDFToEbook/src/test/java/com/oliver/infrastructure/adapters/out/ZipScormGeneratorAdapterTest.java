@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -35,18 +34,19 @@ class ZipScormGeneratorAdapterTest {
         String title = "Test eBook";
         File pagesDir = tempDir.resolve("pages").toFile();
         pagesDir.mkdirs();
-        
+
         // Crear una página dummy (imagen y texto)
         Files.writeString(tempDir.resolve("pages/1.txt"), "Contenido de la página 1");
         File imgFile = tempDir.resolve("pages/1.jpg").toFile();
         try (FileOutputStream fos = new FileOutputStream(imgFile)) {
-            fos.write(new byte[]{0, 1, 2, 3}); // Fake JPG content
+            fos.write(new byte[] { 0, 1, 2, 3 }); // Fake JPG content
         }
 
         EbookPagesMap pagesMap = new EbookPagesMap(pagesDir, 1, "<ul><li>Page 1</li></ul>");
 
         // Act
-        String zipPath = adapter.generatePackage(title, pagesMap, progress -> {});
+        String zipPath = adapter.generatePackage(title, pagesMap, progress -> {
+        });
 
         // Assert
         assertNotNull(zipPath);
@@ -62,11 +62,13 @@ class ZipScormGeneratorAdapterTest {
             assertNotNull(zip.getEntry("js/viewer.js"), "Debe contener js/viewer.js");
             assertNotNull(zip.getEntry("assets/js/texts.js"), "Debe contener assets/js/texts.js");
             assertNotNull(zip.getEntry("assets/pages/1.jpg"), "Debe contener assets/pages/1.jpg");
-            
+
             // Verificar inyección de texto en texts.js
             ZipEntry textsEntry = zip.getEntry("assets/js/texts.js");
-            String textsJs = new String(zip.getInputStream(textsEntry).readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            assertTrue(textsJs.contains("Contenido de la página 1"), "El JS de textos debe contener el texto de la página");
+            String textsJs = new String(zip.getInputStream(textsEntry).readAllBytes(),
+                    java.nio.charset.StandardCharsets.UTF_8);
+            assertTrue(textsJs.contains("Contenido de la página 1"),
+                    "El JS de textos debe contener el texto de la página");
         } finally {
             // Cleanup
             zipFile.delete();
