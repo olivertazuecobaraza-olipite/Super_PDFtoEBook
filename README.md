@@ -89,4 +89,4 @@ Si prefieres compilarlo tú mismo:
 
 ## 📜 Licencia & Créditos
 
-Desarrollado con pasión y arquitectura de hierro por **Oliver**.
+Desarrollado con pasión y arquitectura de hierro por **Oliver Tazueco Baraza**.
