@@ -264,7 +264,8 @@ public class ConverterController {
             return;
 
         try {
-            List<Ebook> books = libraryRepository.findAll();
+            // Ya tenemos un método optimizado que trae los últimos paginados
+            List<Ebook> books = libraryRepository.findPaginated(1, 5);
             recentBooksContainer.getChildren().clear();
 
             if (books == null || books.isEmpty()) {
@@ -273,11 +274,8 @@ public class ConverterController {
             }
 
             // Mostrar últimos libros (máximo 5) en el converter
-            int count = 0;
-            // Reverse para mostrar el último generado arriba
-            for (int i = books.size() - 1; i >= 0 && count < 5; i--) {
-                recentBooksContainer.getChildren().add(createBookCard(books.get(i)));
-                count++;
+            for (Ebook book : books) {
+                recentBooksContainer.getChildren().add(createBookCard(book));
             }
 
         } catch (Exception e) {

@@ -81,6 +81,56 @@ public class CsvLibraryRepositoryAdapter implements LibraryRepositoryPort {
     }
 
     @Override
+    public synchronized int count() throws Exception {
+        File dbFile = new File(dbPath);
+        if (!dbFile.exists()) return 0;
+        
+        int lines = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(dbFile))) {
+            br.readLine(); // saltar cabecera
+            while (br.readLine() != null) {
+                lines++;
+            }
+        }
+        return lines;
+    }
+
+    @Override
+    public synchronized List<Ebook> findPaginated(int page, int size) throws Exception {
+        File dbFile = new File(dbPath);
+        if (!dbFile.exists()) {
+            return Collections.emptyList();
+        }
+        
+        List<String> allLines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(dbFile))) {
+            String line = br.readLine(); // saltar cabecera
+            while ((line = br.readLine()) != null) {
+                allLines.add(line);
+            }
+        }
+        
+        // Invertir para mostrar los últimos agregados primero
+        Collections.reverse(allLines);
+        
+        int start = (page - 1) * size;
+        int end = Math.min(start + size, allLines.size());
+        
+        if (start >= allLines.size() || start < 0) {
+            return Collections.emptyList();
+        }
+        
+        List<Ebook> books = new ArrayList<>();
+        for (int i = start; i < end; i++) {
+            String[] parts = allLines.get(i).split(",");
+            if (parts.length >= 4) {
+                books.add(new Ebook(parts[0], parts[1], parts[2], parts[3]));
+            }
+        }
+        return books;
+    }
+
+    @Override
     public synchronized void delete(String id) throws Exception {
         File dbFile = new File(dbPath);
         if (!dbFile.exists()) return;

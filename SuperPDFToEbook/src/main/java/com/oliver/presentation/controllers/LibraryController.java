@@ -31,6 +31,21 @@ public class LibraryController {
     @FXML
     private VBox booksContainer;
 
+    @FXML
+    private HBox paginationContainer;
+
+    @FXML
+    private Button btnPrevPage;
+
+    @FXML
+    private Button btnNextPage;
+
+    @FXML
+    private Label lblPageIndicator;
+
+    private int currentPage = 1;
+    private final int PAGE_SIZE = 10;
+
     private static File lastKnownDirectory = null;
 
     public LibraryController(LibraryRepositoryPort libraryRepository) {
@@ -40,19 +55,41 @@ public class LibraryController {
     @FXML
     public void initialize() {
         System.out.println("✅ LibraryController inyectado: Cargando base de datos...");
+        
+        btnPrevPage.setOnAction(e -> {
+            if (currentPage > 1) {
+                currentPage--;
+                loadBooksFromDatabase();
+            }
+        });
+        
+        btnNextPage.setOnAction(e -> {
+            currentPage++;
+            loadBooksFromDatabase();
+        });
+        
         loadBooksFromDatabase();
     }
 
     private void loadBooksFromDatabase() {
         try {
-            // Ir al Core a recuperar la lista
-            List<Ebook> books = libraryRepository.findAll();
+            int totalBooks = libraryRepository.count();
+            int totalPages = (int) Math.ceil((double) totalBooks / PAGE_SIZE);
+            if (totalPages == 0) totalPages = 1;
 
-            // Limpiar la grilla por las dudas
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+            }
+
+            // Ir al Core a recuperar la lista paginada
+            List<Ebook> books = libraryRepository.findPaginated(currentPage, PAGE_SIZE);
+
+            // Limpiar la grilla
             booksContainer.getChildren().clear();
 
             if (books == null || books.isEmpty()) {
                 showEmptyState();
+                updatePaginationUI(0, 1);
                 return;
             }
 
@@ -62,9 +99,26 @@ public class LibraryController {
                 booksContainer.getChildren().add(card);
             }
 
+            updatePaginationUI(totalBooks, totalPages);
+
         } catch (Exception e) {
             System.err.println("❌ Error al leer la base de datos de libros: " + e.getMessage());
             showEmptyState();
+            updatePaginationUI(0, 1);
+        }
+    }
+
+    private void updatePaginationUI(int totalBooks, int totalPages) {
+        if (totalBooks == 0) {
+            paginationContainer.setVisible(false);
+            paginationContainer.setManaged(false);
+        } else {
+            paginationContainer.setVisible(true);
+            paginationContainer.setManaged(true);
+            
+            lblPageIndicator.setText(currentPage + " / " + totalPages);
+            btnPrevPage.setDisable(currentPage <= 1);
+            btnNextPage.setDisable(currentPage >= totalPages);
         }
     }
 

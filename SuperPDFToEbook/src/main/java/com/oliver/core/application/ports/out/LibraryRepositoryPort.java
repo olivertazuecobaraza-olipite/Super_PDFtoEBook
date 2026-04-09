@@ -15,6 +15,12 @@ public interface LibraryRepositoryPort {
     // El frontend necesita recuperar la lista de libros
     List<Ebook> findAll() throws Exception;
     
+    // Recuperar libros paginados (los más recientes primero)
+    List<Ebook> findPaginated(int page, int size) throws Exception;
+    
+    // Obtener cantidad total de libros
+    int count() throws Exception;
+    
     // Método para borrar de la base de datos
     void delete(String id) throws Exception;
 }
