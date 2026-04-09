@@ -20,7 +20,7 @@ import java.util.zip.ZipOutputStream;
 public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
 
     @Override
-    public String generatePackage(String title, EbookPagesMap pagesMap, java.util.function.Consumer<Double> progressCallback) throws Exception {
+    public String generatePackage(String title, String organizationName, EbookPagesMap pagesMap, java.util.function.Consumer<Double> progressCallback) throws Exception {
         System.out.println("📦 [Zip SCORM] Empaquetando SCORM Interactivo (Index + Audio)...");
         
         String workspacePath = System.getProperty("user.home") + File.separator + ".superpdf_workspace";
@@ -35,7 +35,7 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
         try (FileOutputStream fos = new FileOutputStream(zipFile);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
             
-            addFileToZip(zos, "imsmanifest.xml", buildManifest(title).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            addFileToZip(zos, "imsmanifest.xml", buildManifest(title, organizationName).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
             String rawHtml = readTemplate("templates/scorm/index.html");
             // Doble inyección: el total de páginas y el HTML estático del menú Outline
@@ -119,12 +119,19 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
         zos.closeEntry();
     }
     
-    private String buildManifest(String title) {
+    private String buildManifest(String title, String organizationName) {
         String safeXmlTitle = title != null ? title.replace("&", "&amp;")
                                                    .replace("<", "&lt;")
                                                    .replace(">", "&gt;")
                                                    .replace("\"", "&quot;")
                                                    .replace("'", "&apos;") : "eBook";
+        
+        String safeOrg = (organizationName == null || organizationName.trim().isEmpty()) ? "ORG_DEFAULT" : organizationName.trim();
+        safeOrg = safeOrg.replace("&", "&amp;")
+                         .replace("<", "&lt;")
+                         .replace(">", "&gt;")
+                         .replace("\"", "&quot;")
+                         .replace("'", "&apos;");
 
         return "<?xml version=\"1.0\" standalone=\"no\" ?>\n" +
                "<manifest identifier=\"com.oliver.scorm\" version=\"1.2\" \n" +
@@ -134,8 +141,8 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
                "    <schema>ADL SCORM</schema>\n" +
                "    <schemaversion>1.2</schemaversion>\n" +
                "  </metadata>\n" +
-               "  <organizations default=\"org_1\">\n" +
-               "    <organization identifier=\"org_1\">\n" +
+               "  <organizations default=\"" + safeOrg + "\">\n" +
+               "    <organization identifier=\"" + safeOrg + "\">\n" +
                "      <title>" + safeXmlTitle + "</title>\n" +
                "      <item identifier=\"item_1\" identifierref=\"resource_1\">\n" +
                "        <title>" + safeXmlTitle + "</title>\n" +

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class DummyScormGeneratorAdapter implements ScormGeneratorPort {
 
     @Override
-    public String generatePackage(String title, EbookPagesMap pagesMap, java.util.function.Consumer<Double> progressCallback) throws Exception {
+    public String generatePackage(String title, String organizationName, EbookPagesMap pagesMap, java.util.function.Consumer<Double> progressCallback) throws Exception {
         System.out.println("⚠️ [DUMMY Generator] Simulando la creación SCORM DUMMY para: " + title);
         System.out.println("⚠️ Directorio recibido con páginas: " + pagesMap.tempDirectory().getAbsolutePath());
         

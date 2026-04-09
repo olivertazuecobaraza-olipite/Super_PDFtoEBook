@@ -35,9 +35,16 @@
                     <Label text="📋 Añadir Índice" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000666;"/>
                     <TextArea fx:id="txtIndex" promptText="Escribe o pega aquí la estructura del índice para tu eBook..." VBox.vgrow="ALWAYS" wrapText="true" style="-fx-background-color: #ffffff; -fx-border-color: transparent;" />
                     
-                    <Region prefHeight="5"/>
-                    <Label text="📝 Título del eBook (Opcional)" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #000666;"/>
-                    <TextField fx:id="txtTitle" promptText="Ej: Curso de Matemáticas..." style="-fx-background-color: #ffffff; -fx-border-color: transparent; -fx-padding: 10px;" />
+                    <HBox spacing="15">
+                        <VBox HBox.hgrow="ALWAYS" spacing="8">
+                            <Label text="📝 Título del eBook (Opcional)" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #000666;"/>
+                            <TextField fx:id="txtTitle" promptText="Ej: Curso de Matemáticas..." style="-fx-background-color: #ffffff; -fx-border-color: transparent; -fx-padding: 10px;" />
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" spacing="8">
+                            <Label text="🏢 Organización (Opcional)" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #000666;"/>
+                            <TextField fx:id="txtOrganization" promptText="Ej: Mi Empresa..." style="-fx-background-color: #ffffff; -fx-border-color: transparent; -fx-padding: 10px;" />
+                        </VBox>
+                    </HBox>
                     
                     <VBox fx:id="progressContainer" spacing="5" visible="false" managed="false" style="-fx-padding: 10px 0 0 0;">
                         <Label fx:id="lblProgressText" text="Procesando tu SCORM..." style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #000666;" />

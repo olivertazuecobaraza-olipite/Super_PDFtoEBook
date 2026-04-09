@@ -45,7 +45,7 @@ class ZipScormGeneratorAdapterTest {
         EbookPagesMap pagesMap = new EbookPagesMap(pagesDir, 1, "<ul><li>Page 1</li></ul>");
 
         // Act
-        String zipPath = adapter.generatePackage(title, pagesMap, progress -> {
+        String zipPath = adapter.generatePackage(title, "Test Org", pagesMap, progress -> {
         });
 
         // Assert
@@ -83,7 +83,8 @@ class ZipScormGeneratorAdapterTest {
         EbookPagesMap pagesMap = new EbookPagesMap(tempDir.toFile(), 0, "");
 
         // Act
-        String zipPath = adapter.generatePackage(maliciousTitle, pagesMap, null);
+        // Act
+        String zipPath = adapter.generatePackage(maliciousTitle, null, pagesMap, null);
 
         // Assert
         File zipFile = new File(zipPath);

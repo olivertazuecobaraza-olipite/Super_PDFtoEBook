@@ -9,5 +9,5 @@ import com.oliver.core.domain.models.EbookPagesMap;
  * y la inyección de las plantillas estáticas con las imágenes.
  */
 public interface ScormGeneratorPort {
-    String generatePackage(String title, EbookPagesMap pagesMap, java.util.function.Consumer<Double> progressCallback) throws Exception;
+    String generatePackage(String title, String organizationName, EbookPagesMap pagesMap, java.util.function.Consumer<Double> progressCallback) throws Exception;
 }

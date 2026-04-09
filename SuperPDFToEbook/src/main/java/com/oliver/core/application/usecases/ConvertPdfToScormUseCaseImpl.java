@@ -31,7 +31,7 @@ public class ConvertPdfToScormUseCaseImpl implements ConvertPdfToScormUseCase {
     }
 
     @Override
-    public ConversionResult execute(File pdfFile, String textIndex, String customTitle, java.util.function.Consumer<Double> progressCallback) {
+    public ConversionResult execute(File pdfFile, String textIndex, String customTitle, String organizationName, java.util.function.Consumer<Double> progressCallback) {
         if (pdfFile == null || !pdfFile.exists()) {
             return new ConversionResult(false, "El archivo PDF no existe o fue movido.", null);
         }
@@ -54,7 +54,7 @@ public class ConvertPdfToScormUseCaseImpl implements ConvertPdfToScormUseCase {
                     : customTitle.trim();
 
             // Fase 2: Empaquetado a SCORM (Representa el otro 50%)
-            String outputPath = scormGenerator.generatePackage(title, pagesMap, progress -> {
+            String outputPath = scormGenerator.generatePackage(title, organizationName, pagesMap, progress -> {
                 if (progressCallback != null) {
                     progressCallback.accept(0.5 + (progress * 0.5)); 
                 }

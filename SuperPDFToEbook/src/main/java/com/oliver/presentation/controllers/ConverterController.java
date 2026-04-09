@@ -61,6 +61,8 @@ public class ConverterController {
     @FXML
     private TextField txtTitle;
     @FXML
+    private TextField txtOrganization;
+    @FXML
     private ProgressBar convertProgressBar;
     @FXML
     private ProgressIndicator uploadProgress;
@@ -170,9 +172,10 @@ public class ConverterController {
             return;
         }
 
-        // Recuperar el índice y título opcional
+        // Recuperar el índice, título y organización opcional
         String indexText = txtIndex.getText();
         String customTitle = txtTitle.getText();
+        String organization = txtOrganization.getText();
 
         // UI State: Entramos en modo "Procesando" para bloquear clicks accidentales
         btnProcess.setDisable(true);
@@ -180,6 +183,7 @@ public class ConverterController {
         btnSelectFile.setDisable(true);
         txtIndex.setDisable(true);
         txtTitle.setDisable(true);
+        txtOrganization.setDisable(true);
         
         progressContainer.setVisible(true);
         progressContainer.setManaged(true);
@@ -191,7 +195,7 @@ public class ConverterController {
             @Override
             protected ConversionResult call() throws Exception {
                 // Esta línea bloquea el hilo secundario (Background thread)
-                return convertUseCase.execute(selectedPdfFile, indexText, customTitle, progress -> {
+                return convertUseCase.execute(selectedPdfFile, indexText, customTitle, organization, progress -> {
                     Platform.runLater(() -> convertProgressBar.setProgress(progress));
                 });
             }
@@ -207,6 +211,7 @@ public class ConverterController {
                 btnSelectFile.setDisable(false);
                 txtIndex.setDisable(false);
                 txtTitle.setDisable(false);
+                txtOrganization.setDisable(false);
                 progressContainer.setVisible(false);
                 progressContainer.setManaged(false);
                 
@@ -217,6 +222,7 @@ public class ConverterController {
                     this.selectedPdfFile = null; // Reiniciamos estado
                     txtIndex.clear(); // Limpiando campos de texto como pidió el usuario
                     txtTitle.clear();
+                    txtOrganization.clear();
                     loadRecentBooks(); // <--- Recargar la lista al vuelo!
                 } else {
                     btnProcess.setText("✨ Intentar de nuevo");
@@ -240,6 +246,7 @@ public class ConverterController {
                 btnSelectFile.setDisable(false);
                 txtIndex.setDisable(false); // Liberar
                 txtTitle.setDisable(false); // Liberar
+                txtOrganization.setDisable(false); // Liberar
                 progressContainer.setVisible(false);
                 progressContainer.setManaged(false);
                 btnProcess.setText("☠️ ¡Fallo Crítico!");
