@@ -213,8 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function applyZoom() {
-        pageLeftContainer.style.transform = `scale(${currentZoom})`;
-        pageRightContainer.style.transform = `scale(${currentZoom})`;
+        // En lugar de usar 'transform: scale()', que genera solapamiento porque los objetos
+        // crecen desde sus propios centros hacia afuera sin que flexbox se entere,
+        // modificamos la altura física real de la caja contenedora, así flexbox empuja la otra imagen.
+        const newHeight = (currentZoom * 90) + 'vh';
+        pageLeftContainer.style.height = newHeight;
+        pageRightContainer.style.height = newHeight;
     }
 
     btnZoomIn.addEventListener('click', () => {

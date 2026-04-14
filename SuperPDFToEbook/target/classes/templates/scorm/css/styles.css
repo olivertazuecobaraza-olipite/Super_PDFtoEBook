@@ -97,15 +97,15 @@ body, html {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     border-radius: 4px; 
     overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    transform-origin: center center;
-    max-height: 90vh; 
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 90vh; 
     display: flex;
 }
 
 .page-container.hidden { display: none; }
-.page-container img {
-    max-height: 100%;
+.page-container img, .page-container canvas {
+    height: 100%; /* El canvas y la imagen fuerzan el 100% de la altura del contenedor padre */
+    width: auto; /* Mantienen la proporción natural */
     max-width: 100%;
     object-fit: contain;
     user-select: none;
