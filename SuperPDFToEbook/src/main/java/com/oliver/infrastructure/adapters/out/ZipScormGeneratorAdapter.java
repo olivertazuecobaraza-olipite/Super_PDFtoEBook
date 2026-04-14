@@ -50,6 +50,10 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
             String jsCode = readTemplate("templates/scorm/js/viewer.js");
             addFileToZip(zos, "js/viewer.js", jsCode.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
+            // DEPENDENCIES PDF.JS PARA OFFLINE
+            addResourceToZip(zos, "js/pdf.min.js", "templates/scorm/js/pdf.min.js");
+            addResourceToZip(zos, "js/pdf.worker.min.js", "templates/scorm/js/pdf.worker.min.js");
+            
             // Empaquetar activos Multimedia y armar JS dinámico Offline (Bypass a Web CORS)
             File tempDir = pagesMap.tempDirectory();
             StringBuilder jsTextArray = new StringBuilder("window.SCORM_PAGES_TEXT = [\"\""); // Index 0 = Null padding
@@ -74,22 +78,20 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
             jsTextArray.append("];\n");
             addFileToZip(zos, "assets/js/texts.js", jsTextArray.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
-            // Empaquetar SOLO los archivos JPG visuales al ZIP y notificar progreso
-            File[] files = tempDir.listFiles();
-            if (files != null) {
-                int count = 0;
-                int totalImages = 0;
-                for (File f : files) { if (f.getName().endsWith(".jpg")) totalImages++; }
-                for (File file : files) {
-                    if (file.getName().endsWith(".jpg")) {
-                        byte[] fileData = Files.readAllBytes(file.toPath());
-                        // Usar siempre '/' para los nombres de entrada del ZIP (Estándar ZIP)
-                        addFileToZip(zos, "assets/pages/" + file.getName(), fileData);
-                        count++;
-                        if (progressCallback != null && totalImages > 0) {
-                            progressCallback.accept((double) count / totalImages);
-                        }
-                    }
+            // EMPAQUETAR EL DOCUMENTO ORIGINAL .PDF Y COMO BASE64 PARA EVADIR CORS OFFLINE
+            File pdfFile = new File(tempDir, "document.pdf");
+            if (pdfFile.exists()) {
+                byte[] fileData = Files.readAllBytes(pdfFile.toPath());
+                
+                // Inyección segura Base64
+                String base64Pdf = java.util.Base64.getEncoder().encodeToString(fileData);
+                String pdfJsPayload = "window.SCORM_PDF_B64 = \"" + base64Pdf + "\";\n";
+                addFileToZip(zos, "assets/js/pdf_data.js", pdfJsPayload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                
+                // Conservamos el archivo puro
+                addFileToZip(zos, "assets/document.pdf", fileData);
+                if (progressCallback != null) {
+                    progressCallback.accept(1.0); // Completado
                 }
             }
         }
@@ -117,6 +119,20 @@ public class ZipScormGeneratorAdapter implements ScormGeneratorPort {
         zos.putNextEntry(entry);
         zos.write(content, 0, content.length);
         zos.closeEntry();
+    }
+    
+    private void addResourceToZip(ZipOutputStream zos, String zipPath, String resourcePath) throws IOException {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            if (is == null) throw new IOException("Recurso binario no encontrado: " + resourcePath);
+            ZipEntry entry = new ZipEntry(zipPath);
+            zos.putNextEntry(entry);
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
+            }
+            zos.closeEntry();
+        }
     }
     
     private String buildManifest(String title, String organizationName) {

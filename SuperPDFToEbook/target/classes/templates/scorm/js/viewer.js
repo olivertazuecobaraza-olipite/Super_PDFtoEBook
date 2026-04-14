@@ -59,10 +59,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnToggleView = document.getElementById('btn-toggle-view');
     let isSinglePageMode = false;
 
+    // -- 0. PDF.js Engine Boot --
+    let pdfDoc = null;
+    if (window['pdfjs-dist/build/pdf']) {
+        window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+    }
+    if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.min.js';
+        
+        let loadingTask;
+        if (typeof window.SCORM_PDF_B64 !== "undefined" && window.SCORM_PDF_B64) {
+            // Conversión de Base64 a Uint8Array explícita
+            const binaryString = atob(window.SCORM_PDF_B64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            console.log("Cargando PDF vía buffer Base64 Bypass CORS...");
+            loadingTask = window.pdfjsLib.getDocument({data: bytes});
+        } else {
+            console.log("Cargando PDF vía HTTP URL directo...");
+            loadingTask = window.pdfjsLib.getDocument('assets/document.pdf');
+        }
+
+        loadingTask.promise.then(doc => {
+            pdfDoc = doc;
+            console.log("🟢 PDF.js ha cargado el documento vectorizado con éxito. Páginas: " + pdfDoc.numPages);
+            updateView(); // Rendereo inicial
+        }).catch(err => {
+            console.error("🔴 Error PDF.js cargando el documento original: ", err);
+        });
+    }
+
+    function renderCanvasPage(pageNum, canvasId) {
+        if (!pdfDoc) return;
+        pdfDoc.getPage(pageNum).then(page => {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const context = canvas.getContext('2d');
+            
+            // 1.5 es un buen multiplicador base para HD, luego CSS y zoom del contenedor lo achica
+            const viewport = page.getViewport({ scale: 1.5 }); 
+            
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            const renderContext = { canvasContext: context, viewport: viewport };
+            page.render(renderContext);
+        });
+    }
+
     // -- 1. Visor Dual / Single --
     function updateView() {
+        if (!pdfDoc && window.pdfjsLib) return; // Evitar disparo fantasma si aún carga el PDF.js
+        
         if (isSinglePageMode) {
-            pageLeft.src = `assets/pages/${currentPage}.jpg`;
+            renderCanvasPage(currentPage, 'page-left-canvas');
             pageLeftContainer.classList.remove('hidden');
             pageRightContainer.classList.add('hidden');
             indicator.textContent = `Página ${currentPage} de ${totalPages}`;
@@ -80,14 +132,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const showRight = currentPage + 1 <= totalPages;
 
             if (showLeft) {
-                pageLeft.src = `assets/pages/${currentPage}.jpg`;
+                renderCanvasPage(currentPage, 'page-left-canvas');
                 pageLeftContainer.classList.remove('hidden');
             } else {
                 pageLeftContainer.classList.add('hidden');
             }
 
             if (showRight) {
-                pageRight.src = `assets/pages/${currentPage + 1}.jpg`;
+                renderCanvasPage(currentPage + 1, 'page-right-canvas');
                 pageRightContainer.classList.remove('hidden');
             } else {
                 pageRightContainer.classList.add('hidden');
@@ -102,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btnPrev.disabled = currentPage <= 1;
             btnNext.disabled = currentPage + 1 > totalPages; 
             
-            // Disparador de SCORM Completed
             if (currentPage + 1 >= totalPages && scormAPI) {
                 scormAPI.LMSSetValue("cmi.core.lesson_status", "completed");
                 scormAPI.LMSCommit("");

@@ -7,13 +7,8 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineNode;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.UUID;
@@ -38,7 +33,6 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
         try {
             // Usamos MemoryUsageSetting.setupTempFileOnly() para que los PDFs gigantes (1000+ páginas) NO colapsen la Memoria RAM.
             try (PDDocument document = PDDocument.load(pdfFile, org.apache.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())) {
-                PDFRenderer renderer = new PDFRenderer(document);
                 PDFTextStripper stripper = new PDFTextStripper();
             
                 int totalPages = document.getNumberOfPages();
@@ -59,7 +53,11 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
                     }
                 }
 
-                System.out.println("⏳ Procesando " + totalPages + " páginas...");
+                // NUEVO: Copiamos el archivo PDF original tal cual al espacio temporal
+                File targetPdfFile = new File(tempDir, "document.pdf");
+                Files.copy(pdfFile.toPath(), targetPdfFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                System.out.println("⏳ Procesando extracción de texto para " + totalPages + " páginas...");
                 for (int i = 0; i < totalPages; i++) {
                     // Notificar progreso (0.0 a 1.0)
                     if (progressCallback != null) {
@@ -71,11 +69,6 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
                     }
                     int pageNum = i + 1;
 
-                    BufferedImage image = renderer.renderImageWithDPI(i, 200, ImageType.RGB);
-                    File imageFile = new File(tempDir, pageNum + ".jpg");
-                    ImageIO.write(image, "JPEG", imageFile);
-                    image.flush();
-
                     stripper.setStartPage(pageNum);
                     stripper.setEndPage(pageNum);
                     String pageText = stripper.getText(document);
@@ -83,7 +76,7 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
                     Files.writeString(textFile.toPath(), pageText);
                 }
 
-                System.out.println("✅ [PDFBox] Todas las páginas volcadas. Imgs y Textos físicos disponibles.");
+                System.out.println("✅ [PDFBox] Todas las páginas volcadas. Documento PDF y Textos TTS disponibles.");
                 return new EbookPagesMap(tempDir, totalPages, outlineHtml);
             }
         } catch (Exception e) {
