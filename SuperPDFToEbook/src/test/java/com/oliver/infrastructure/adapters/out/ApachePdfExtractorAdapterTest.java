@@ -84,8 +84,7 @@ class ApachePdfExtractorAdapterTest {
         // Verificar archivos físicos
         File workspace = result.tempDirectory();
         assertTrue(workspace.exists());
-        assertTrue(new File(workspace, "1.jpg").exists(), "Debe existir el render de la página 1.");
-        assertTrue(new File(workspace, "2.jpg").exists(), "Debe existir el render de la página 2.");
+        assertTrue(new File(workspace, "document.pdf").exists(), "Debe existir el clon del PDF original.");
         assertTrue(new File(workspace, "1.txt").exists(), "Debe existir el texto de la página 1.");
         assertTrue(new File(workspace, "2.txt").exists(), "Debe existir el texto de la página 2.");
         

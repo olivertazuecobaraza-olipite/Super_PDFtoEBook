@@ -35,11 +35,11 @@ class ZipScormGeneratorAdapterTest {
         File pagesDir = tempDir.resolve("pages").toFile();
         pagesDir.mkdirs();
 
-        // Crear una página dummy (imagen y texto)
+        // Crear una página dummy (texto) y el pdf dummy
         Files.writeString(tempDir.resolve("pages/1.txt"), "Contenido de la página 1");
-        File imgFile = tempDir.resolve("pages/1.jpg").toFile();
-        try (FileOutputStream fos = new FileOutputStream(imgFile)) {
-            fos.write(new byte[] { 0, 1, 2, 3 }); // Fake JPG content
+        File pdfFile = tempDir.resolve("pages/document.pdf").toFile();
+        try (FileOutputStream fos = new FileOutputStream(pdfFile)) {
+            fos.write(new byte[] { 0, 1, 2, 3 }); // Fake PDF content
         }
 
         EbookPagesMap pagesMap = new EbookPagesMap(pagesDir, 1, "<ul><li>Page 1</li></ul>");
@@ -61,7 +61,8 @@ class ZipScormGeneratorAdapterTest {
             assertNotNull(zip.getEntry("css/styles.css"), "Debe contener css/styles.css");
             assertNotNull(zip.getEntry("js/viewer.js"), "Debe contener js/viewer.js");
             assertNotNull(zip.getEntry("assets/js/texts.js"), "Debe contener assets/js/texts.js");
-            assertNotNull(zip.getEntry("assets/pages/1.jpg"), "Debe contener assets/pages/1.jpg");
+            assertNotNull(zip.getEntry("assets/document.pdf"), "Debe contener assets/document.pdf");
+            assertNotNull(zip.getEntry("assets/js/pdf_data.js"), "Debe contener assets/js/pdf_data.js");
 
             // Verificar inyección de texto en texts.js
             ZipEntry textsEntry = zip.getEntry("assets/js/texts.js");
