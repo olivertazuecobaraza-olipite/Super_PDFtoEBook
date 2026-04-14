@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const btnCloseSidebar = document.getElementById('btn-close-sidebar');
     const btnAudio = document.getElementById('btn-audio');
+    const voiceSelect = document.getElementById('voice-select');
     
     // Toggle Layout
     const btnToggleView = document.getElementById('btn-toggle-view');
@@ -186,6 +187,63 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // -- 4. Modulo TTS Audio (Audilibro vía APIs de Navegador) --
+    let availableVoices = [];
+
+    function populateVoiceList() {
+        if (typeof speechSynthesis === 'undefined') return;
+
+        // Limpiar lista actual y buscar las voces en español
+        availableVoices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es'));
+        
+        voiceSelect.innerHTML = '';
+        if (availableVoices.length === 0) {
+            const option = document.createElement('option');
+            option.textContent = 'Voz predeterminada del sistema';
+            option.value = '';
+            voiceSelect.appendChild(option);
+            return;
+        }
+
+        const savedVoiceURI = localStorage.getItem('scorm_preferred_voice');
+        
+        availableVoices.forEach((voice) => {
+            const option = document.createElement('option');
+            option.textContent = voice.name;
+            option.value = voice.voiceURI;
+            
+            // Seleccionar guardada
+            if (savedVoiceURI && voice.voiceURI === savedVoiceURI) {
+                option.selected = true;
+            }
+            voiceSelect.appendChild(option);
+        });
+        
+        // Auto-seleccionar una buena voz o la principal si no hay elección guardada
+        if (!savedVoiceURI && availableVoices.length > 0) {
+            const bestVoiceObj = availableVoices.find(v => v.name.includes('Neural') || v.name.includes('Google'));
+            if (bestVoiceObj) {
+                voiceSelect.value = bestVoiceObj.voiceURI;
+            } else {
+                voiceSelect.value = availableVoices[0].voiceURI;
+            }
+        }
+    }
+
+    if (speechSynthesis !== undefined) {
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+    }
+
+    voiceSelect.addEventListener('change', () => {
+        localStorage.setItem('scorm_preferred_voice', voiceSelect.value);
+        if (isPlayingAudio) {
+            stopAudio();
+            playAudio();
+        }
+    });
+
     function stopAudio() {
         speechSynthesis.cancel();
         isPlayingAudio = false;
@@ -219,6 +277,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const utterance = new SpeechSynthesisUtterance(textToRead);
             utterance.lang = "es-ES";
+
+            // Asignar voz elegida del combo
+            const selectedURI = voiceSelect.value;
+            if (selectedURI) {
+                const selectedVoice = availableVoices.find(v => v.voiceURI === selectedURI);
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                }
+            }
+            
             utterance.onend = () => stopAudio();
 
             speechSynthesis.speak(utterance);
