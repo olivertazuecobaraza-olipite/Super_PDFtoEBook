@@ -37,6 +37,9 @@ public class JavaFxApplication extends Application {
         stage.setScene(scene);
         stage.setTitle("Super PDF to eBook 3000 V1");
         
+        // Cargar el ícono para la ventana y la barra de tareas
+        stage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/LogoPDFtoEbook512.png")));
+        
         // Ponemos el tope mínimo para que no se pisen los componentes
         stage.setMinWidth(1100);
         stage.setMinHeight(700);
