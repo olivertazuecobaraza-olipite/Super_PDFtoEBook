@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCloseSidebar = document.getElementById('btn-close-sidebar');
     const btnAudio = document.getElementById('btn-audio');
     const voiceSelect = document.getElementById('voice-select');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
     
     // Toggle Layout
     const btnToggleView = document.getElementById('btn-toggle-view');
@@ -355,6 +356,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnAudio.addEventListener('click', playAudio);
+
+    // -- 5. Pantalla Completa --
+    btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error intentando activar pantalla completa: ${err.message}`);
+            });
+            btnFullscreen.innerHTML = "Exit Fullscreen";
+        } else {
+            document.exitFullscreen();
+            btnFullscreen.innerHTML = "⛶ Pantalla Completa";
+        }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            btnFullscreen.innerHTML = "⛶ Pantalla Completa";
+        }
+    });
 
     // Initial Trigger
     updateView();

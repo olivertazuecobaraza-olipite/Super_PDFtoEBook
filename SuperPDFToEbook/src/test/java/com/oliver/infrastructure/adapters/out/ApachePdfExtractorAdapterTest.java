@@ -97,18 +97,21 @@ class ApachePdfExtractorAdapterTest {
     }
 
     @Test
-    @DisplayName("Debe usar el índice manual si el usuario lo provee")
+    @DisplayName("Debe usar el índice manual si el usuario lo provee (soporte para espacio y guion)")
     void testExtractPages_ManualIndex() throws Exception {
         // Arrange
-        String manualIndex = "Prefacio - 1\nIntroduccion - 2";
+        String manualIndex = "Prefacio - 1\nIntroduccion 2";
 
         // Act
         EbookPagesMap result = adapter.extractPages(realPdfFile, manualIndex, null);
 
         // Assert
-        assertTrue(result.outlineHtml().contains("Prefacio"), "El HTML debe contener el índice manual.");
-        assertTrue(result.outlineHtml().contains("Introduccion"), "El HTML debe contener el índice manual.");
-        assertTrue(result.outlineHtml().contains("Índice de autor"), "Debe indicar que es un índice de autor.");
+        String html = result.outlineHtml();
+        assertTrue(html.contains("Prefacio"), "El HTML debe contener el índice manual (guion).");
+        assertTrue(html.contains("window.goToPage(1)"), "Debe tener link a pág 1.");
+        assertTrue(html.contains("Introduccion"), "El HTML debe contener el índice manual (espacio).");
+        assertTrue(html.contains("window.goToPage(2)"), "Debe tener link a pág 2.");
+        assertTrue(html.contains("Índice de autor"), "Debe indicar que es un índice de autor.");
         
         deleteDirectory(result.tempDirectory());
     }

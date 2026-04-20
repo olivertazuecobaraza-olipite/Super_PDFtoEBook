@@ -105,19 +105,38 @@ public class ApachePdfExtractorAdapter implements PdfExtractorPort {
             if (line.isEmpty())
                 continue;
 
+            String title = null;
+            int pageNum = -1;
+
+            // 1. Intentamos con el formato tradicional: Título - Página
             int lastDashIndex = line.lastIndexOf('-');
             if (lastDashIndex != -1 && lastDashIndex < line.length() - 1) {
-                String title = line.substring(0, lastDashIndex).trim();
-                String pageStr = line.substring(lastDashIndex + 1).trim();
-
+                String potentialPage = line.substring(lastDashIndex + 1).trim();
                 try {
-                    int pageNum = Integer.parseInt(pageStr);
-                    sb.append("<li><a href=\"#\" onclick=\"window.goToPage(").append(pageNum)
-                            .append("); return false;\">")
-                            .append(escapeHtml(title)).append("</a></li>");
-                } catch (NumberFormatException e) {
-                    sb.append("<li><span style=\"opacity:0.8\">").append(escapeHtml(line)).append("</span></li>");
+                    pageNum = Integer.parseInt(potentialPage);
+                    title = line.substring(0, lastDashIndex).trim();
+                } catch (NumberFormatException ignored) {
                 }
+            }
+
+            // 2. Fallback: Intentamos con el formato de espacio: Título Página
+            // (Usamos el último espacio como separador)
+            if (title == null) {
+                int lastSpaceIndex = line.lastIndexOf(' ');
+                if (lastSpaceIndex != -1 && lastSpaceIndex < line.length() - 1) {
+                    String potentialPage = line.substring(lastSpaceIndex + 1).trim();
+                    try {
+                        pageNum = Integer.parseInt(potentialPage);
+                        title = line.substring(0, lastSpaceIndex).trim();
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+
+            if (title != null) {
+                sb.append("<li><a href=\"#\" onclick=\"window.goToPage(").append(pageNum)
+                        .append("); return false;\">")
+                        .append(escapeHtml(title)).append("</a></li>");
             } else {
                 sb.append("<li><span style=\"opacity:0.8\">").append(escapeHtml(line)).append("</span></li>");
             }
